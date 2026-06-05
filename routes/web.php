@@ -19,6 +19,9 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\Auth\{LoginController, ProfileController};
 
+// ─── Healthcheck (public, no auth) ────────────────────────────────────────
+Route::get('/health', fn() => response()->json(['status' => 'ok'], 200));
+
 // ─── Auth ─────────────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
