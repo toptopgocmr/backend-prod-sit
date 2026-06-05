@@ -29,10 +29,13 @@ RUN composer install --optimize-autoloader --no-scripts --no-interaction --no-de
 
 COPY . .
 
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+RUN mkdir -p storage/framework/sessions \
+             storage/framework/views \
+             storage/framework/cache \
+             storage/logs \
+             bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["sh", "-c", "php artisan config:cache && php artisan storage:link --force 2>/dev/null || true && php artisan migrate --force 2>/dev/null || true && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
