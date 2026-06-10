@@ -96,6 +96,14 @@
                     <span class="text-sm font-semibold text-dark">Salaires</span>
                     <span class="text-sm font-bold text-dark">{{ number_format($report['expenses']['salaries'], 0, ',', ' ') }}</span>
                 </div>
+                @if(isset($report['expenses']['purchases']) && $report['expenses']['purchases'] > 0)
+                <div class="flex justify-between mt-1.5">
+                    <span class="text-sm font-semibold text-amber-700 flex items-center gap-1">
+                        <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span> Achats stock
+                    </span>
+                    <span class="text-sm font-bold text-amber-700">{{ number_format($report['expenses']['purchases'], 0, ',', ' ') }}</span>
+                </div>
+                @endif
             </div>
         </div>
     </div>

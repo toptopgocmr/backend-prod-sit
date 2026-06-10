@@ -137,7 +137,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('/stock', [ReportController::class, 'stock'])->name('stock');
         Route::get('/clients', [ReportController::class, 'clients'])->name('clients');
         Route::get('/finance', [ReportController::class, 'finance'])->name('finance');
-        Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
+        Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
 
     // ─── Utilisateurs (admin seulement) ───────────────────────────
