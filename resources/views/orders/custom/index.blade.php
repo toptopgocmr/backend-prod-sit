@@ -24,6 +24,10 @@
                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors">
                 <i data-lucide="file-text" class="w-4 h-4"></i> PDF
             </a>
+            <a href="{{ route('quotes.create') }}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Nouveau devis
+            </a>
             <a href="{{ route('custom-orders.create') }}"
                class="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-600 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle commande

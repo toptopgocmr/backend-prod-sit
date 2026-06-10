@@ -65,6 +65,11 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     Route::post('custom-orders/{customOrder}/payment', [CustomOrderController::class, 'recordPayment'])->name('custom-orders.payment');
     Route::get('custom-orders/{customOrder}/fiche', [CustomOrderController::class, 'printFiche'])->name('custom-orders.fiche');
     Route::post('custom-orders/{customOrder}/measures', [CustomOrderController::class, 'saveMeasures'])->name('custom-orders.saveMeasures');
+    // ── Devis ──
+    Route::resource('quotes', \App\Http\Controllers\Admin\QuoteController::class);
+    Route::put('quotes/{quote}/status', [\App\Http\Controllers\Admin\QuoteController::class, 'updateStatus'])->name('quotes.status');
+    Route::post('quotes/{quote}/convert', [\App\Http\Controllers\Admin\QuoteController::class, 'convertToOrder'])->name('quotes.convert');
+    Route::get('quotes/{quote}/pdf', [\App\Http\Controllers\Admin\QuoteController::class, 'pdf'])->name('quotes.pdf');
 
     // ─── Produits ──────────────────────────────────────────────────
     Route::resource('products', ProductController::class);

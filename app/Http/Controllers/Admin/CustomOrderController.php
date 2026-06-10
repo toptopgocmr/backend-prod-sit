@@ -83,6 +83,9 @@ class CustomOrderController extends Controller
             'delivery_date'      => 'nullable|date|after:today',
             'assigned_to'        => 'nullable|exists:users,id',
             'measurement_id'     => 'nullable|exists:measurements,id',
+            'new_measurement_label' => 'nullable|string|max:255',
+            'new_measurement'    => 'nullable|array',
+            'manual_measurement' => 'nullable|array',
             'notes'              => 'nullable|string',
         ]);
 
@@ -104,8 +107,45 @@ class CustomOrderController extends Controller
             $total = $fabricCost + $validated['labor_cost'] + $accessoriesCost;
             $deposit = $validated['deposit'] ?? 0;
 
+            // ── Gestion des mesures avant création ──
+            $measurementId = $validated['measurement_id'] ?? null;
+
+            // Mode "Nouvelle fiche" : new_measurement[...] avec label
+            $newMeasurementData = array_filter(
+                $request->input('new_measurement', []),
+                fn($v) => $v !== null && $v !== ''
+            );
+            $newLabel = $request->input('new_measurement_label');
+
+            if ($newLabel && !empty($newMeasurementData)) {
+                $clientId = $validated['client_id'];
+                $measurement = Measurement::create([
+                    'client_id'  => $clientId,
+                    'label'      => $newLabel,
+                    'values'     => $newMeasurementData,
+                    'is_default' => $request->boolean('new_measurement_default'),
+                ]);
+                $measurementId = $measurement->id;
+            }
+
+            // Mode "Saisie directe" : manual_measurement[...] — on crée aussi une fiche auto
+            $manualData = array_filter(
+                $request->input('manual_measurement', []),
+                fn($v) => $v !== null && $v !== ''
+            );
+            if (empty($measurementId) && !empty($manualData)) {
+                $measurement = Measurement::create([
+                    'client_id'  => $validated['client_id'],
+                    'label'      => 'Saisie directe — ' . now()->format('d/m/Y'),
+                    'values'     => $manualData,
+                    'is_default' => false,
+                ]);
+                $measurementId = $measurement->id;
+            }
+
             $order = CustomOrder::create([
                 ...$validated,
+                'measurement_id'    => $measurementId,
                 'fabric_cost'       => $fabricCost,
                 'accessories_cost'  => $accessoriesCost,
                 'total'             => $total,
@@ -313,18 +353,32 @@ class CustomOrderController extends Controller
 
     public function saveMeasures(Request $request, CustomOrder $customOrder)
     {
-        $measures = array_filter($request->input('measures', []), fn($v) => $v !== null && $v !== '');
+        // Accepter aussi bien 'measures' que 'new_measurement' ou 'manual_measurement'
+        $measures = $request->input('measures', []);
+        if (empty($measures)) {
+            $measures = $request->input('new_measurement', []);
+        }
+        if (empty($measures)) {
+            $measures = $request->input('manual_measurement', []);
+        }
 
-        if ($customOrder->measurement_id) {
-            // Mettre à jour la fiche existante
-            $customOrder->measurement->update(['values' => $measures]);
+        $measures = array_filter($measures, fn($v) => $v !== null && $v !== '');
+
+        if (empty($measures)) {
+            return back()->with('error', 'Aucune mesure à enregistrer.');
+        }
+
+        if ($customOrder->measurement_id && $customOrder->measurement) {
+            // Mettre à jour la fiche existante — fusionner avec les anciennes valeurs
+            $existing = $customOrder->measurement->values ?? [];
+            $customOrder->measurement->update(['values' => array_merge($existing, $measures)]);
         } else {
             // Créer une nouvelle fiche et l'associer
             $measurement = \App\Models\Measurement::create([
                 'client_id'  => $customOrder->client_id,
-                'label'      => 'Fiche — ' . $customOrder->reference,
+                'label'      => $request->input('measurement_label', 'Fiche — ' . $customOrder->reference),
                 'values'     => $measures,
-                'is_default' => false,
+                'is_default' => $request->boolean('is_default', false),
             ]);
             $customOrder->update(['measurement_id' => $measurement->id]);
         }
