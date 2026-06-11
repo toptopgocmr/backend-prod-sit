@@ -39,44 +39,45 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name'        => 'required|string|max:100',
-            'last_name'         => 'required|string|max:100',
-            'phone'             => 'required|string|max:30',
-            'email'             => 'nullable|email|max:150',
-            'address'           => 'nullable|string',
-            'city'              => 'nullable|string|max:100',
-            'gender'            => 'required|in:homme,femme,non_precise',
-            'birth_date'        => 'nullable|date|before:today',
-            'notes'             => 'nullable|string',
-            // Mesures (mode ancien client)
-            'mesure_label'             => 'nullable|string|max:100',
-            'mesures.poitrine'         => 'nullable|numeric|min:1',
-            'mesures.taille'           => 'nullable|numeric|min:1',
-            'mesures.hanches'          => 'nullable|numeric|min:1',
-            'mesures.epaules'          => 'nullable|numeric|min:1',
-            'mesures.cou'              => 'nullable|numeric|min:1',
-            'mesures.bras'             => 'nullable|numeric|min:1',
-            'mesures.longueur_manche'  => 'nullable|numeric|min:1',
-            'mesures.longueur_robe'    => 'nullable|numeric|min:1',
-            'mesures.longueur_pantalon'=> 'nullable|numeric|min:1',
-            'mesures.entrejambe'       => 'nullable|numeric|min:1',
-            'mesures.notes'            => 'nullable|string',
+            'first_name'  => 'required|string|max:100',
+            'last_name'   => 'required|string|max:100',
+            'phone'       => 'required|string|max:30',
+            'email'       => 'nullable|email|max:150',
+            'address'     => 'nullable|string',
+            'city'        => 'nullable|string|max:100',
+            'gender'      => 'required|in:homme,femme,non_precise',
+            'birth_date'  => 'nullable|date|before:today',
+            'notes'       => 'nullable|string',
+            'mesure_label'=> 'nullable|string|max:100',
+            'mesures'     => 'nullable|array',
+            'mesures.*'   => 'nullable',
         ]);
 
         $client = Client::create(\Arr::except($validated, ['mesure_label', 'mesures']));
 
-        // Si mode ancien client et au moins une mesure renseignée
-        $mesuresData = $request->input('mesures', []);
-        $hasMesures  = collect($mesuresData)->filter(fn($v) => $v !== null && $v !== '')->isNotEmpty();
+        // Sauvegarde des mesures si au moins une valeur renseignée
+        $mesuresData = collect($request->input('mesures', []))
+            ->filter(fn($v) => $v !== null && $v !== '')
+            ->toArray();
 
-        if ($hasMesures) {
+        if (!empty($mesuresData)) {
+            // Séparer les champs legacy des champs JSON (f_*, h_*, e_*)
+            $legacyKeys  = ['poitrine','taille','hanches','epaules','cou','bras',
+                            'longueur_manche','longueur_robe','longueur_pantalon','entrejambe','notes'];
+            $legacyFields = array_intersect_key($mesuresData, array_flip($legacyKeys));
+            $jsonFields   = array_diff_key($mesuresData, array_flip($legacyKeys));
+
             $client->measurements()->create(array_merge(
-                ['label' => $request->input('mesure_label', 'Mesures initiales'), 'is_default' => true],
-                array_filter($mesuresData, fn($v) => $v !== null && $v !== '')
+                [
+                    'label'      => $request->input('mesure_label', 'Mesures initiales'),
+                    'is_default' => true,
+                    'values'     => !empty($jsonFields) ? $jsonFields : null,
+                ],
+                $legacyFields
             ));
         }
 
-        $msg = $hasMesures ? 'Client enregistré avec ses mesures.' : 'Client créé avec succès.';
+        $msg = !empty($mesuresData) ? 'Client enregistré avec ses mesures.' : 'Client créé avec succès.';
         return redirect()->route('clients.show', $client)->with('success', $msg);
     }
 

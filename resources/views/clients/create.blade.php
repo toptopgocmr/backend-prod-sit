@@ -163,51 +163,207 @@
         </div>
 
         {{-- ── Mesures (Ancien client seulement) ──────────── --}}
-        <div x-show="mode==='ancien'" x-transition class="bg-white rounded-2xl border border-dark/10 p-5 mb-5">
-            <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2 mb-1">
-                <i data-lucide="ruler" class="w-4 h-4 text-dark/60"></i>
-                Mesures corporelles
-            </h3>
-            <p class="text-xs text-gray-400 mb-4">Toutes les mesures sont en centimètres (cm)</p>
+        <div x-show="mode==='ancien'" x-transition class="space-y-4 mb-5">
 
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Libellé des mesures</label>
+            {{-- Libellé --}}
+            <div class="bg-white rounded-2xl border border-dark/10 p-5">
+                <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2 mb-3">
+                    <i data-lucide="ruler" class="w-4 h-4 text-dark/60"></i>
+                    Mesures corporelles
+                    <span class="ml-auto text-xs font-normal text-gray-400">en centimètres (cm)</span>
+                </h3>
                 <input type="text" name="mesure_label" value="{{ old('mesure_label','Mesures initiales') }}"
-                       placeholder="Ex : Mesures initiales, Tenue de mariage..."
-                       class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-dark/10 focus:border-dark transition-all mb-4">
+                       placeholder="Ex : Mesures initiales, Tenue de mariage, Uniforme..."
+                       class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-dark/10 focus:border-dark transition-all">
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                @php
-                $mesures = [
-                    'poitrine'          => ['label' => 'Poitrine', 'icon' => '◉', 'placeholder' => '90'],
-                    'taille'            => ['label' => 'Taille',   'icon' => '◉', 'placeholder' => '70'],
-                    'hanches'           => ['label' => 'Hanches',  'icon' => '◉', 'placeholder' => '95'],
-                    'epaules'           => ['label' => 'Épaules',  'icon' => '◉', 'placeholder' => '38'],
-                    'cou'               => ['label' => 'Cou',      'icon' => '◉', 'placeholder' => '37'],
-                    'bras'              => ['label' => 'Bras',     'icon' => '|', 'placeholder' => '60'],
-                    'longueur_manche'   => ['label' => 'Manche',   'icon' => '|', 'placeholder' => '60'],
-                    'longueur_robe'     => ['label' => 'Robe/Boubou','icon'=>'|', 'placeholder' => '110'],
-                    'longueur_pantalon' => ['label' => 'Pantalon', 'icon' => '|', 'placeholder' => '100'],
-                    'entrejambe'        => ['label' => 'Entrejambe','icon'=> '|', 'placeholder' => '75'],
-                ];
-                @endphp
-                @foreach($mesures as $field => $meta)
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">{{ $meta['label'] }} <span class="text-gray-300 font-normal">cm</span></label>
-                    <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
-                           placeholder="{{ $meta['placeholder'] }}" step="0.5" min="1"
-                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-dark/10 focus:border-dark transition-all">
+            @php
+            $inputClass = 'w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-dark/10 focus:border-dark transition-all';
+            $labelClass = 'block text-xs font-semibold text-gray-500 mb-1';
+            @endphp
+
+            {{-- ═══ FEMME ══════════════════════════════════════════ --}}
+            <div x-show="gender === 'femme'" class="space-y-4">
+
+                {{-- Haut du corps --}}
+                <div class="bg-pink-50/60 rounded-2xl border border-pink-100 p-5">
+                    <p class="text-xs font-bold text-pink-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="shirt" style="width:13px;height:13px"></i> Haut du corps
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'f_longueur_epaule'      => ['Longueur épaule',    '38'],
+                            'f_tour_poitrine'        => ['Tour de poitrine',   '92'],
+                            'f_tour_taille'          => ['Tour de taille',     '70'],
+                            'f_petites_hanches'      => ['Petites hanches',    '88'],
+                            'f_grandes_hanches'      => ['Grandes hanches',    '96'],
+                            'f_hauteur_saillant'     => ['Hauteur saillant',   '26'],
+                            'f_ecart_saillants'      => ['Écart saillants',    '18'],
+                            'f_hauteur_buste_devant' => ['Buste devant',       '32'],
+                            'f_hauteur_buste_dos'    => ['Buste dos',          '38'],
+                            'f_longueur_cote_buste'  => ['Côté buste',         '16'],
+                            'f_tour_manche'          => ['Tour de manche',     '28'],
+                            'f_longueur_manche'      => ['Longueur manche',    '60'],
+                            'f_carrure_devant'       => ['Carrure devant',     '34'],
+                            'f_carrure_dos'          => ['Carrure dos',        '36'],
+                            'f_longueur_veste'       => ['Longueur veste',     '68'],
+                            'f_tour_encolure'        => ['Tour encolure',      '38'],
+                            'f_hauteur_fessier'      => ['Hauteur fessier',    '22'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
-                @endforeach
+
+                {{-- Bas du corps --}}
+                <div class="bg-pink-50/60 rounded-2xl border border-pink-100 p-5">
+                    <p class="text-xs font-bold text-pink-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="scissors" style="width:13px;height:13px"></i> Bas du corps
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'f_tour_ceinture'     => ['Tour de ceinture',     '72'],
+                            'f_tour_bassin'       => ['Tour de bassin',       '96'],
+                            'f_hauteur_bassin'    => ['Hauteur bassin',       '20'],
+                            'f_longueur_assise'   => ["Longueur d'assise",    '30'],
+                            'f_fourche_devant'    => ['Fourche devant',       '28'],
+                            'f_fourche_dos'       => ['Fourche dos',          '32'],
+                            'f_entrejambe'        => ['Entrejambe',           '75'],
+                            'f_longueur_pantalon' => ['Longueur pantalon',    '100'],
+                            'f_tour_cuisse'       => ['Tour de cuisse',       '56'],
+                            'f_largeur_bas'       => ['Largeur du bas',       '16'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Longueurs robes & jupes --}}
+                <div class="bg-pink-50/60 rounded-2xl border border-pink-100 p-5">
+                    <p class="text-xs font-bold text-pink-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="layers" style="width:13px;height:13px"></i> Longueurs robes & jupes
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'f_robe_longue'       => ['Robe longue',        '120'],
+                            'f_robe_avant_genoux' => ['Robe avant genoux',  '58'],
+                            'f_robe_apres_genoux' => ['Robe après genoux',  '65'],
+                            'f_robe_trois_quarts' => ['Robe ¾',             '90'],
+                            'f_jupe_longue'       => ['Jupe longue',        '100'],
+                            'f_jupe_genoux'       => ['Jupe genoux',        '52'],
+                            'f_jupe_trois_quarts' => ['Jupe ¾',             '75'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-3">
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Notes atelier</label>
+            {{-- ═══ HOMME ══════════════════════════════════════════ --}}
+            <div x-show="gender === 'homme'" class="space-y-4">
+
+                {{-- Haut du corps --}}
+                <div class="bg-blue-50/60 rounded-2xl border border-blue-100 p-5">
+                    <p class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="shirt" style="width:13px;height:13px"></i> Haut du corps
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'h_epaule'             => ['Épaule',            '44'],
+                            'h_manche_longue'      => ['Manche longue',     '64'],
+                            'h_manche_courte'      => ['Manche courte',     '22'],
+                            'h_tour_poitrine'      => ['Tour de poitrine',  '96'],
+                            'h_tour_taille_ventre' => ['Taille / ventre',   '88'],
+                            'h_carrure_dos'        => ['Carrure dos',       '42'],
+                            'h_longueur_chemise'   => ['Longueur chemise',  '72'],
+                            'h_longueur_veste'     => ['Longueur veste',    '75'],
+                            'h_contour_manche'     => ['Contour manche',    '30'],
+                            'h_tour_col'           => ['Tour de col',       '40'],
+                            'h_longueur_devant'    => ['Longueur devant',   '68'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Bas du corps --}}
+                <div class="bg-blue-50/60 rounded-2xl border border-blue-100 p-5">
+                    <p class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="scissors" style="width:13px;height:13px"></i> Bas du corps
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'h_tour_ceinture'    => ['Tour de ceinture',   '86'],
+                            'h_tour_bassin'      => ['Tour de bassin',     '96'],
+                            'h_tour_cuisse'      => ['Tour de cuisse',     '58'],
+                            'h_largeur_genoux'   => ['Largeur genoux',     '22'],
+                            'h_tour_mollet'      => ['Tour de mollet',     '38'],
+                            'h_diametre_bas'     => ['Diamètre du bas',    '18'],
+                            'h_longueur_pantalon'=> ['Longueur pantalon',  '104'],
+                            'h_longueur_culotte' => ['Longueur culotte',   '62'],
+                            'h_pisset'           => ['Pisset (braguette)', '22'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- ═══ NON PRÉCISÉ — champs basiques ════════════════ --}}
+            <div x-show="gender === 'non_precise'">
+                <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Mesures générales</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach([
+                            'poitrine'           => ['Poitrine',   '90'],
+                            'taille'             => ['Taille',     '70'],
+                            'hanches'            => ['Hanches',    '96'],
+                            'epaules'            => ['Épaules',    '40'],
+                            'cou'                => ['Cou',        '38'],
+                            'bras'               => ['Bras',       '60'],
+                            'longueur_manche'    => ['Manche',     '60'],
+                            'longueur_robe'      => ['Robe/Boubou','110'],
+                            'longueur_pantalon'  => ['Pantalon',   '100'],
+                            'entrejambe'         => ['Entrejambe', '75'],
+                        ] as $field => [$label, $ph])
+                        <div>
+                            <label class="{{ $labelClass }}">{{ $label }} <span class="text-gray-300 font-normal">cm</span></label>
+                            <input type="number" name="mesures[{{ $field }}]" value="{{ old('mesures.'.$field) }}"
+                                   placeholder="{{ $ph }}" step="0.5" min="1" class="{{ $inputClass }}">
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Notes atelier (toujours visible si mode=ancien) --}}
+            <div class="bg-white rounded-2xl border border-gray-100 p-4">
+                <label class="{{ $labelClass }} mb-2">Notes atelier</label>
                 <textarea name="mesures[notes]" rows="2"
                           placeholder="Particularités morphologiques, préférences de coupe..."
                           class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-dark resize-none focus:outline-none focus:ring-2 focus:ring-dark/10 focus:border-dark transition-all">{{ old('mesures.notes') }}</textarea>
             </div>
+
         </div>
 
         {{-- ── Notes internes ──────────────────────────── --}}
