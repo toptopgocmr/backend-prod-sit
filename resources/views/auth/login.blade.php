@@ -15,7 +15,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #f0f0f0;
+            background-color: #f0f0f0;
+            background-image:
+                repeating-conic-gradient(rgba(0,0,0,0.07) 0% 25%, transparent 0% 50%);
+            background-size: 28px 28px;
             position: relative;
             overflow: hidden;
         }

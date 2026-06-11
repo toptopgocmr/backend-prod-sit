@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\{
     StockApiController,
     MaintenanceApiController,
     DeliveryApiController,
+    QuoteApiController,
+    SalaryApiController,
 };
 
 // ─── Auth publique ─────────────────────────────────────────────────────────
@@ -71,6 +73,22 @@ Route::prefix('v1')->group(function () {
         Route::put('deliveries/{delivery}/status', [DeliveryApiController::class, 'updateStatus']);
         Route::post('deliveries/{delivery}/proof', [DeliveryApiController::class, 'uploadProof']);
         Route::put('deliveries/{delivery}/location', [DeliveryApiController::class, 'updateLocation']);
+
+        // Devis
+        Route::get('quotes', [QuoteApiController::class, 'index']);
+        Route::post('quotes', [QuoteApiController::class, 'store']);
+        Route::get('quotes/{quote}', [QuoteApiController::class, 'show']);
+        Route::put('quotes/{quote}', [QuoteApiController::class, 'update']);
+        Route::put('quotes/{quote}/status', [QuoteApiController::class, 'updateStatus']);
+        Route::delete('quotes/{quote}', [QuoteApiController::class, 'destroy'])->middleware('role:admin');
+
+        // Salaires (admin seulement)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('salaries', [SalaryApiController::class, 'index']);
+            Route::post('salaries', [SalaryApiController::class, 'store']);
+            Route::get('salaries/{salary}', [SalaryApiController::class, 'show']);
+            Route::get('salaries/employees/list', [SalaryApiController::class, 'employees']);
+        });
 
         // Finance (admin seulement)
         Route::middleware('role:admin')->group(function () {
