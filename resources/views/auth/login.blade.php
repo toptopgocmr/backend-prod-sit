@@ -15,21 +15,33 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: #efefef;
+            background-color: #F4F4F8;
             position: relative;
             overflow: hidden;
         }
 
-        /* ── Bandes diagonales GSIT (noir/blanc, style PeeX) ── */
-        .bg-band {
+        /* ── Formes colorées style TopTopGo ── */
+        .shape {
             position: fixed;
-            top: -30%;
-            bottom: -30%;
+            border-radius: 14px;
             pointer-events: none;
-            transform: skewX(-16deg);
+            opacity: 0.72;
         }
-        .bg-band-1 { left: -18%; width: 52%; background: rgba(0,0,0,0.055); }
-        .bg-band-2 { right: -10%; width: 38%; background: rgba(0,0,0,0.03); }
+        /* Gauche */
+        .s1  { left:-5%;  top:6%;   width:220px; height:110px; background:#F5C842; transform:rotate(18deg); }
+        .s2  { left:-3%;  top:26%;  width:170px; height: 85px; background:#8FA8C8; transform:rotate(-8deg); }
+        .s3  { left:-4%;  top:45%;  width:190px; height: 80px; background:#B8A9D9; transform:rotate(14deg); }
+        .s4  { left:-2%;  top:68%;  width:200px; height: 95px; background:#F5C842; transform:rotate(-12deg); }
+        .s5  { left:-6%;  top:86%;  width:155px; height: 75px; background:#F0A896; transform:rotate(6deg); }
+        /* Droite */
+        .s6  { right:-6%; top:4%;   width:230px; height:115px; background:#8FA8C8; transform:rotate(-20deg); }
+        .s7  { right:-4%; top:26%;  width:180px; height: 88px; background:#B8A9D9; transform:rotate(10deg); }
+        .s8  { right:-5%; top:45%;  width:200px; height: 90px; background:#96C8A8; transform:rotate(-6deg); }
+        .s9  { right:-4%; top:67%;  width:215px; height:105px; background:#F5C842; transform:rotate(16deg); }
+        .s10 { right:-5%; top:86%;  width:165px; height: 78px; background:#8FA8C8; transform:rotate(-9deg); }
+        /* Haut/bas centre */
+        .s11 { left:42%;  top:-2%;  width:140px; height: 65px; background:#F0A896; transform:rotate(4deg); }
+        .s12 { left:42%;  bottom:-2%; width:150px; height:68px; background:#96C8A8; transform:rotate(-4deg); }
 
         /* ── Logo en haut ── */
         .logo-top {
@@ -191,9 +203,19 @@
 </head>
 <body>
 
-    <!-- Bandes diagonales fond -->
-    <div class="bg-band bg-band-1"></div>
-    <div class="bg-band bg-band-2"></div>
+    <!-- Formes colorées fond -->
+    <div class="shape s1"></div>
+    <div class="shape s2"></div>
+    <div class="shape s3"></div>
+    <div class="shape s4"></div>
+    <div class="shape s5"></div>
+    <div class="shape s6"></div>
+    <div class="shape s7"></div>
+    <div class="shape s8"></div>
+    <div class="shape s9"></div>
+    <div class="shape s10"></div>
+    <div class="shape s11"></div>
+    <div class="shape s12"></div>
 
     <!-- Logo -->
     <div class="logo-top">
