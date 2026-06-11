@@ -54,10 +54,35 @@ class FinanceService
         // Maintenance du mois
         $maintenanceCost = MaintenanceLog::whereBetween('created_at', [$start, $end])->sum('cost');
 
+        $ordersCount = Order::whereBetween('created_at', [$start, $end])->count();
+        $customCount = CustomOrder::whereBetween('created_at', [$start, $end])->count();
+        $totalOrders = $ordersCount + $customCount;
+        $averageOrder = $totalOrders > 0 ? round($totalRevenue / $totalOrders, 2) : 0;
+
+        // Top produits vendus sur la période
+        $topProducts = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->select('products.name', DB::raw('SUM(order_items.quantity) as quantity'), DB::raw('SUM(order_items.quantity * order_items.unit_price) as total'))
+            ->whereBetween('orders.created_at', [$start, $end])
+            ->where('orders.status', '!=', 'cancelled')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
         return [
             'period'             => Carbon::create($year, $month)->translatedFormat('F Y'),
             'year'               => $year,
             'month'              => $month,
+            // Champs plats (compatibilité Flutter)
+            'total_revenue'      => $totalRevenue,
+            'total_expenses'     => $totalExpenses,
+            'profit'             => $totalRevenue - $totalExpenses,
+            'total_orders'       => $totalOrders,
+            'average_order'      => $averageOrder,
+            'top_products'       => $topProducts,
+            // Structure détaillée
             'revenue'            => [
                 'orders'  => $orderRevenue,
                 'custom'  => $customRevenue,
@@ -70,13 +95,12 @@ class FinanceService
                 'maintenance'=> $maintenanceCost,
                 'total'      => $totalExpenses,
             ],
-            'profit'             => $totalRevenue - $totalExpenses,
             'margin'             => $totalRevenue > 0 ? round((($totalRevenue - $totalExpenses) / $totalRevenue) * 100, 1) : 0,
             'expense_breakdown'  => $expenseByCategory,
             'sales_by_type'      => $salesByType,
             'unpaid_receivables' => $unpaidOrders + $unpaidCustom,
-            'orders_count'       => Order::whereBetween('created_at', [$start, $end])->count(),
-            'custom_count'       => CustomOrder::whereBetween('created_at', [$start, $end])->count(),
+            'orders_count'       => $ordersCount,
+            'custom_count'       => $customCount,
         ];
     }
 

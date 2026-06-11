@@ -128,7 +128,7 @@ class ReportController extends Controller
     private function getStockData(Carbon $start, Carbon $end): array
     {
         $totalValue    = DB::table('products')->where('is_active', true)->sum(DB::raw('stock_quantity * purchase_price'));
-        $lowStockCount = DB::table('products')->whereRaw('stock_quantity <= min_stock_alert')->where('is_active', true)->count();
+        $lowStockCount = DB::table('products')->whereRaw('stock_quantity <= alert_threshold')->where('is_active', true)->count();
         $outOfStock    = DB::table('products')->where('stock_quantity', 0)->where('is_active', true)->count();
 
         $movements = StockMovement::with('product')
