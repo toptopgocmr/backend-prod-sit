@@ -9,7 +9,7 @@
 
 @section('content')
 <div class="max-w-2xl space-y-5" x-data="{
-    mode: '{{ old('mode','nouveau') }}',
+    mode: '{{ old('mode', request('mode','nouveau')) }}',
     gender: '{{ old('gender','femme') }}'
 }">
 

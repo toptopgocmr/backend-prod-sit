@@ -8,6 +8,10 @@
         <div class="flex-1">
             <p class="text-sm text-gray-500">{{ $clients->total() }} client(s) enregistré(s)</p>
         </div>
+        <a href="{{ route('clients.create') }}?mode=ancien"
+           class="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm">
+            <i data-lucide="users" class="w-4 h-4"></i> Ancien client
+        </a>
         <a href="{{ route('clients.create') }}"
            class="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-600 transition-colors shadow-sm">
             <i data-lucide="user-plus" class="w-4 h-4"></i> Nouveau client
