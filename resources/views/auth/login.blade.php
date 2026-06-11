@@ -15,13 +15,21 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: #f0f0f0;
-            background-image:
-                repeating-conic-gradient(rgba(0,0,0,0.09) 0% 25%, transparent 0% 50%);
-            background-size: 90px 90px;
+            background-color: #efefef;
             position: relative;
             overflow: hidden;
         }
+
+        /* ── Bandes diagonales GSIT (noir/blanc, style PeeX) ── */
+        .bg-band {
+            position: fixed;
+            top: -30%;
+            bottom: -30%;
+            pointer-events: none;
+            transform: skewX(-16deg);
+        }
+        .bg-band-1 { left: -18%; width: 52%; background: rgba(0,0,0,0.055); }
+        .bg-band-2 { right: -10%; width: 38%; background: rgba(0,0,0,0.03); }
 
         /* ── Logo en haut ── */
         .logo-top {
@@ -182,6 +190,10 @@
     </style>
 </head>
 <body>
+
+    <!-- Bandes diagonales fond -->
+    <div class="bg-band bg-band-1"></div>
+    <div class="bg-band bg-band-2"></div>
 
     <!-- Logo -->
     <div class="logo-top">

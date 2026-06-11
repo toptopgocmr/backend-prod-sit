@@ -20,16 +20,27 @@ class FinanceService
             ->where('status', '!=', 'annule')->sum('amount_paid');
         $totalRevenue  = $orderRevenue + $customRevenue;
 
-        // Sorties — opérations (toutes dépenses confondues, y compris achats stock)
+        // Sorties — opérations (dépenses courantes)
         $expenses   = Expense::whereBetween('expense_date', [$start, $end])->sum('amount');
         $salaries   = SalaryPayment::where('month', $month)->where('year', $year)->sum('net_amount');
 
-        // Détail achats stock (sous-ensemble des dépenses)
+        // Bons de commande fournisseurs reçus dans la période
+        $purchaseOrdersAmount = PurchaseOrder::where('status', 'received')
+            ->where(function($q) use ($start, $end) {
+                $q->whereBetween('received_date', [$start, $end])
+                  ->orWhere(function($q2) use ($start, $end) {
+                      $q2->whereNull('received_date')
+                         ->whereBetween('created_at', [$start, $end]);
+                  });
+            })
+            ->sum('total_amount');
+
+        // Détail achats stock dans les dépenses courantes (catégorie type=achat)
         $purchasesAmount = Expense::whereBetween('expense_date', [$start, $end])
             ->whereHas('category', fn($q) => $q->where('type', 'achat'))
             ->sum('amount');
 
-        $totalExpenses = $expenses + $salaries;
+        $totalExpenses = $expenses + $salaries + $purchaseOrdersAmount;
 
         // Dépenses par catégorie (toutes, incluant achats)
         $expenseByCategory = DB::table('expenses')
@@ -89,11 +100,12 @@ class FinanceService
                 'total'   => $totalRevenue,
             ],
             'expenses'           => [
-                'operations' => $expenses,
-                'salaries'   => $salaries,
-                'purchases'  => $purchasesAmount,
-                'maintenance'=> $maintenanceCost,
-                'total'      => $totalExpenses,
+                'operations'      => $expenses,
+                'salaries'        => $salaries,
+                'purchases'       => $purchasesAmount,       // achats via Expense (catégorie achat)
+                'purchase_orders' => $purchaseOrdersAmount,  // bons de commande fournisseurs reçus
+                'maintenance'     => $maintenanceCost,
+                'total'           => $totalExpenses,
             ],
             'margin'             => $totalRevenue > 0 ? round((($totalRevenue - $totalExpenses) / $totalRevenue) * 100, 1) : 0,
             'expense_breakdown'  => $expenseByCategory,

@@ -39,19 +39,45 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name'  => 'required|string|max:100',
-            'phone'      => 'required|string|max:30',
-            'email'      => 'nullable|email|max:150',
-            'address'    => 'nullable|string',
-            'city'       => 'nullable|string|max:100',
-            'gender'     => 'required|in:homme,femme,non_precise',
-            'birth_date' => 'nullable|date|before:today',
-            'notes'      => 'nullable|string',
+            'first_name'        => 'required|string|max:100',
+            'last_name'         => 'required|string|max:100',
+            'phone'             => 'required|string|max:30',
+            'email'             => 'nullable|email|max:150',
+            'address'           => 'nullable|string',
+            'city'              => 'nullable|string|max:100',
+            'gender'            => 'required|in:homme,femme,non_precise',
+            'birth_date'        => 'nullable|date|before:today',
+            'notes'             => 'nullable|string',
+            // Mesures (mode ancien client)
+            'mesure_label'             => 'nullable|string|max:100',
+            'mesures.poitrine'         => 'nullable|numeric|min:1',
+            'mesures.taille'           => 'nullable|numeric|min:1',
+            'mesures.hanches'          => 'nullable|numeric|min:1',
+            'mesures.epaules'          => 'nullable|numeric|min:1',
+            'mesures.cou'              => 'nullable|numeric|min:1',
+            'mesures.bras'             => 'nullable|numeric|min:1',
+            'mesures.longueur_manche'  => 'nullable|numeric|min:1',
+            'mesures.longueur_robe'    => 'nullable|numeric|min:1',
+            'mesures.longueur_pantalon'=> 'nullable|numeric|min:1',
+            'mesures.entrejambe'       => 'nullable|numeric|min:1',
+            'mesures.notes'            => 'nullable|string',
         ]);
 
-        $client = Client::create($validated);
-        return redirect()->route('clients.show', $client)->with('success', 'Client créé avec succès.');
+        $client = Client::create(\Arr::except($validated, ['mesure_label', 'mesures']));
+
+        // Si mode ancien client et au moins une mesure renseignée
+        $mesuresData = $request->input('mesures', []);
+        $hasMesures  = collect($mesuresData)->filter(fn($v) => $v !== null && $v !== '')->isNotEmpty();
+
+        if ($hasMesures) {
+            $client->measurements()->create(array_merge(
+                ['label' => $request->input('mesure_label', 'Mesures initiales'), 'is_default' => true],
+                array_filter($mesuresData, fn($v) => $v !== null && $v !== '')
+            ));
+        }
+
+        $msg = $hasMesures ? 'Client enregistré avec ses mesures.' : 'Client créé avec succès.';
+        return redirect()->route('clients.show', $client)->with('success', $msg);
     }
 
     public function show(Client $client)

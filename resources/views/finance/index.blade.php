@@ -92,18 +92,35 @@
                         <span class="text-sm font-bold text-dark">{{ number_format($cat->total, 0, ',', ' ') }}</span>
                     </div>
                 @endforeach
-                <div class="border-t pt-2 flex justify-between mt-2">
-                    <span class="text-sm font-semibold text-dark">Salaires</span>
+
+                {{-- Salaires --}}
+                @if($report['expenses']['salaries'] > 0)
+                <div class="border-t pt-2 flex items-center gap-3 mt-2">
+                    <div class="w-3 h-3 rounded-full shrink-0 bg-violet-400"></div>
+                    <span class="flex-1 text-sm text-dark">Salaires du personnel</span>
                     <span class="text-sm font-bold text-dark">{{ number_format($report['expenses']['salaries'], 0, ',', ' ') }}</span>
                 </div>
-                @if(isset($report['expenses']['purchases']) && $report['expenses']['purchases'] > 0)
-                <div class="flex justify-between mt-1.5">
-                    <span class="text-sm font-semibold text-amber-700 flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span> Achats stock
-                    </span>
-                    <span class="text-sm font-bold text-amber-700">{{ number_format($report['expenses']['purchases'], 0, ',', ' ') }}</span>
+                @endif
+
+                {{-- Bons de commande fournisseurs --}}
+                @if(isset($report['expenses']['purchase_orders']) && $report['expenses']['purchase_orders'] > 0)
+                <div class="flex items-center gap-3 mt-1">
+                    <div class="w-3 h-3 rounded-full shrink-0 bg-blue-400"></div>
+                    <span class="flex-1 text-sm font-semibold text-blue-700">Achats fournisseurs</span>
+                    <span class="text-sm font-bold text-blue-700">{{ number_format($report['expenses']['purchase_orders'], 0, ',', ' ') }}</span>
+                </div>
+                <div class="ml-6">
+                    <a href="{{ route('purchase-orders.index') }}" class="text-xs text-blue-500 hover:underline">
+                        Voir les bons de commande →
+                    </a>
                 </div>
                 @endif
+
+                {{-- Total --}}
+                <div class="border-t pt-2 flex justify-between mt-2 bg-gray-50 rounded-lg px-3 py-2">
+                    <span class="text-sm font-bold text-dark">Total charges</span>
+                    <span class="text-sm font-bold text-red-600">{{ number_format($report['expenses']['total'], 0, ',', ' ') }} FCFA</span>
+                </div>
             </div>
         </div>
     </div>
