@@ -80,6 +80,7 @@
                 ],
                 'Stock' => [
                     ['route'=>'products.index',     'icon'=>'package',         'label'=>'Produits'],
+                    ['route'=>'categories.index',   'icon'=>'tag',             'label'=>'Catégories'],
                     ['route'=>'stock.index',        'icon'=>'layers',          'label'=>'Stock'],
                     ['route'=>'purchase-orders.index','icon'=>'truck',         'label'=>'Achats'],
                 ],

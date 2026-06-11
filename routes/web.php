@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\{
     OrderController,
     ClientController,
     ProductController,
+    CategoryController,
     StockController,
     FinanceController,
     ExpenseController,
@@ -75,6 +76,13 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/toggle', [ProductController::class, 'toggle'])->name('products.toggle');
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+
+    // ─── Catégories ────────────────────────────────────────────────
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::put('categories/{category}/toggle', [CategoryController::class, 'toggle'])->name('categories.toggle');
 
     // ─── Stock ─────────────────────────────────────────────────────
     Route::prefix('stock')->name('stock.')->group(function () {
