@@ -8,6 +8,29 @@ class DeliveryApiController extends Controller {
     public function index(Request $request) {
         return response()->json(Delivery::with(['client'])->when(auth()->user()->isDelivery(),fn($q)=>$q->where('driver_id',auth()->id()))->latest()->paginate(20));
     }
+
+    public function store(Request $request) {
+        $request->validate([
+            'recipient_name'  => 'required|string|max:255',
+            'address'         => 'required|string',
+            'order_reference' => 'nullable|string',
+            'amount'          => 'nullable|numeric|min:0',
+            'notes'           => 'nullable|string',
+            'client_id'       => 'nullable|exists:clients,id',
+        ]);
+
+        $delivery = Delivery::create([
+            'recipient_name'   => $request->recipient_name,
+            'delivery_address' => $request->address,
+            'reference'        => $request->order_reference ?? ('LIV-' . strtoupper(substr(uniqid(), -6))),
+            'delivery_fee'     => $request->amount ?? 0,
+            'notes'            => $request->notes,
+            'client_id'        => $request->client_id,
+            'status'           => 'pending',
+        ]);
+
+        return response()->json($delivery->load('client'), 201);
+    }
     public function updateStatus(Request $request, Delivery $delivery) {
         $request->validate(['status'=>'required|in:pending,assigned,in_transit,delivered,failed,returned']);
         $delivery->update(['status'=>$request->status]);

@@ -18,4 +18,44 @@ class StockApiController extends Controller {
         $request->validate(['product_id'=>'required|exists:products,id','new_quantity'=>'required|numeric|min:0','reason'=>'required|string']);
         return response()->json($this->stockService->adjust($request->product_id,$request->new_quantity,$request->reason));
     }
+
+    public function storeMovement(Request $request) {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'type'       => 'required|in:entree,sortie,ajustement',
+            'quantity'   => 'required|numeric|min:0.01',
+            'unit_price' => 'nullable|numeric|min:0',
+            'reason'     => 'nullable|string',
+            'notes'      => 'nullable|string',
+        ]);
+
+        // Map mobile "type" to StockService methods
+        if ($request->type === 'entree') {
+            $result = $this->stockService->addStock(
+                $request->product_id,
+                $request->quantity,
+                $request->reason ?? 'Entrée de stock',
+                null,
+                $request->unit_price ?? 0
+            );
+        } elseif ($request->type === 'sortie') {
+            $result = $this->stockService->deduct(
+                $request->product_id,
+                $request->quantity,
+                $request->reason ?? 'Sortie de stock'
+            );
+        } else {
+            // ajustement — recalculate new_quantity from current stock
+            $product = \App\Models\Product::findOrFail($request->product_id);
+            $current = $product->stock_quantity ?? 0;
+            $adjustment = $request->quantity; // treated as absolute new quantity
+            $result = $this->stockService->adjust(
+                $request->product_id,
+                $adjustment,
+                $request->reason ?? 'Ajustement de stock'
+            );
+        }
+
+        return response()->json($result, 201);
+    }
 }

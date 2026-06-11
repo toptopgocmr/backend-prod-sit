@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\{
     DeliveryApiController,
     QuoteApiController,
     SalaryApiController,
+    UserApiController,
+    PurchaseOrderApiController,
 };
 
 // ─── Auth publique ─────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ Route::prefix('v1')->group(function () {
         Route::get('products/{product}', [ProductApiController::class, 'show']);
         Route::post('products', [ProductApiController::class, 'store'])->middleware('role:admin,stock_manager');
         Route::put('products/{product}', [ProductApiController::class, 'update'])->middleware('role:admin,stock_manager');
+        Route::delete('products/{product}', [ProductApiController::class, 'destroy'])->middleware('role:admin');
 
         // Ventes
         Route::apiResource('orders', OrderApiController::class);
@@ -61,15 +64,20 @@ Route::prefix('v1')->group(function () {
         Route::post('stock/add', [StockApiController::class, 'addStock'])->middleware('role:admin,stock_manager');
         Route::post('stock/adjust', [StockApiController::class, 'adjust'])->middleware('role:admin');
         Route::get('stock/movements', [StockApiController::class, 'movements']);
+        Route::post('stock/movements', [StockApiController::class, 'storeMovement'])->middleware('role:admin,stock_manager');
 
         // Maintenance
         Route::get('equipment', [MaintenanceApiController::class, 'equipment']);
+        Route::post('equipment', [MaintenanceApiController::class, 'storeEquipment'])->middleware('role:admin');
+        Route::put('equipment/{id}', [MaintenanceApiController::class, 'updateEquipment'])->middleware('role:admin');
+        Route::delete('equipment/{id}', [MaintenanceApiController::class, 'destroyEquipment'])->middleware('role:admin');
         Route::get('maintenance', [MaintenanceApiController::class, 'index']);
         Route::post('maintenance', [MaintenanceApiController::class, 'store']);
         Route::put('maintenance/{log}/resolve', [MaintenanceApiController::class, 'resolve']);
 
-        // Livraisons (livreur)
+        // Livraisons
         Route::get('deliveries', [DeliveryApiController::class, 'index']);
+        Route::post('deliveries', [DeliveryApiController::class, 'store']);
         Route::put('deliveries/{delivery}/status', [DeliveryApiController::class, 'updateStatus']);
         Route::post('deliveries/{delivery}/proof', [DeliveryApiController::class, 'uploadProof']);
         Route::put('deliveries/{delivery}/location', [DeliveryApiController::class, 'updateLocation']);
@@ -88,6 +96,23 @@ Route::prefix('v1')->group(function () {
             Route::post('salaries', [SalaryApiController::class, 'store']);
             Route::get('salaries/{salary}', [SalaryApiController::class, 'show']);
             Route::get('salaries/employees/list', [SalaryApiController::class, 'employees']);
+        });
+
+        // Utilisateurs (admin seulement)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('users', [UserApiController::class, 'index']);
+            Route::post('users', [UserApiController::class, 'store']);
+            Route::put('users/{id}', [UserApiController::class, 'update']);
+            Route::put('users/{id}/toggle-active', [UserApiController::class, 'toggleActive']);
+            Route::put('users/{id}/reset-password', [UserApiController::class, 'resetPassword']);
+        });
+
+        // Bons de commande / Achats
+        Route::middleware('role:admin,stock_manager')->group(function () {
+            Route::get('purchase-orders', [PurchaseOrderApiController::class, 'index']);
+            Route::post('purchase-orders', [PurchaseOrderApiController::class, 'store']);
+            Route::put('purchase-orders/{id}', [PurchaseOrderApiController::class, 'update']);
+            Route::delete('purchase-orders/{id}', [PurchaseOrderApiController::class, 'destroy'])->middleware('role:admin');
         });
 
         // Finance (admin seulement)

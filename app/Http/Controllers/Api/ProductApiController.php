@@ -13,4 +13,15 @@ class ProductApiController extends Controller {
         return response()->json(Product::create($request->validate(['category_id'=>'required|exists:categories,id','name'=>'required|string','type'=>'required|in:tissu,pret_a_porter,accessoire','alert_threshold'=>'required|integer|min:0'])), 201);
     }
     public function update(Request $request, Product $product) { $product->update($request->all()); return response()->json($product); }
+
+    public function destroy(Product $product) {
+        // Soft-delete: check if it has stock movements or order items first
+        if ($product->stockMovements()->exists() || $product->orderItems()->exists()) {
+            // Don't delete — just deactivate
+            $product->update(['is_active' => false]);
+            return response()->json(['message' => 'Produit désactivé (historique existant).']);
+        }
+        $product->delete();
+        return response()->json(['message' => 'Produit supprimé.']);
+    }
 }
