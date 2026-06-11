@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
 
+        // Exclure les routes API de la vérification CSRF
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/v1/*',
+        ]);
+
         $middleware->alias([
             'check.active' => \App\Http\Middleware\CheckActiveUser::class,
             'role'         => \App\Http\Middleware\RoleMiddleware::class,
