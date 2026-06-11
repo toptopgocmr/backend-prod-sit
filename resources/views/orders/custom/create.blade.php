@@ -367,7 +367,7 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
                     <div x-show="clientId && mode==='existing'" x-transition>
                         <div x-show="clientMeasurements.length > 0" class="space-y-3">
                             <label class="block text-xs font-semibold text-gray-600 mb-1.5">Sélectionner une fiche</label>
-                            <select name="measurement_id" x-model="measurementId"
+                            <select name="measurement_id" x-model="measurementId" :disabled="mode !== 'existing'"
                                     class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark
                                            focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
                                 <option value="">— Choisir une fiche —</option>
