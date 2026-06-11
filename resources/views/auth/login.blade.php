@@ -17,25 +17,11 @@
             justify-content: center;
             background-color: #f0f0f0;
             background-image:
-                repeating-conic-gradient(rgba(0,0,0,0.07) 0% 25%, transparent 0% 50%);
-            background-size: 28px 28px;
+                repeating-conic-gradient(rgba(0,0,0,0.09) 0% 25%, transparent 0% 50%);
+            background-size: 90px 90px;
             position: relative;
             overflow: hidden;
         }
-
-        /* ── Formes géométriques fond ── */
-        .shape {
-            position: absolute;
-            border-radius: 12px;
-            opacity: 0.06;
-            background: #000;
-            transform-origin: center;
-        }
-        .s1 { width: 300px; height: 300px; top: -80px; right: -60px; transform: rotate(20deg); border-radius: 32px; }
-        .s2 { width: 200px; height: 200px; top: 60px;  right: 80px;  transform: rotate(35deg); border-radius: 24px; opacity: 0.04; }
-        .s3 { width: 400px; height: 400px; bottom: -120px; left: -80px; transform: rotate(-15deg); border-radius: 40px; }
-        .s4 { width: 180px; height: 180px; bottom: 60px; left: 120px; transform: rotate(-30deg); border-radius: 20px; opacity: 0.03; }
-        .s5 { width: 120px; height: 120px; top: 40%;  right: 8%;   transform: rotate(45deg); border-radius: 16px; opacity: 0.04; }
 
         /* ── Logo en haut ── */
         .logo-top {
@@ -196,13 +182,6 @@
     </style>
 </head>
 <body>
-
-    <!-- Formes géométriques -->
-    <div class="shape s1"></div>
-    <div class="shape s2"></div>
-    <div class="shape s3"></div>
-    <div class="shape s4"></div>
-    <div class="shape s5"></div>
 
     <!-- Logo -->
     <div class="logo-top">
