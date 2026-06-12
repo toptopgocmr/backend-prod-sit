@@ -53,7 +53,7 @@ class ReportController extends Controller
         $month  = (int) $request->get('month', now()->month);
         $format = $request->get('format', 'pdf');
 
-        [$start, $end] = $this->resolveDates($period, $year, $month);
+        [$start, $end] = array_slice($this->resolveDates($period, $year, $month), 0, 2);
 
         $data = [
             'period_label' => $this->periodLabel($period, $year, $month),
