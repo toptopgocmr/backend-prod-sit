@@ -146,8 +146,8 @@ tfoot td.right { text-align:right; color:#C9A84C; }
    Calculs analytiques
 ════════════════════════════════════════════════════════ */
 $revenue   = $sales['revenue']  ?? 0;
-$expenses  = $expenses['total'] ?? 0;
-$profit    = $revenue - $expenses;
+$depTotal  = $expenses['total'] ?? 0;
+$profit    = $revenue - $depTotal;
 $margin    = $revenue > 0 ? round(($profit / $revenue) * 100, 1) : 0;
 $evolution = $sales['evolution'] ?? null;
 
@@ -203,7 +203,7 @@ $logoSrc  = file_exists($logoPath) ? 'data:image/jpeg;base64,'.base64_encode(fil
                     @endif
                 </div>
                 <div class="cover-kpi">
-                    <div class="cover-kpi-val" style="color:#dc2626">{{ number_format($expenses,0,',',' ') }}</div>
+                    <div class="cover-kpi-val" style="color:#dc2626">{{ number_format($depTotal,0,',',' ') }}</div>
                     <div class="cover-kpi-lbl">Total Dépenses (FCFA)</div>
                 </div>
                 <div class="cover-kpi">

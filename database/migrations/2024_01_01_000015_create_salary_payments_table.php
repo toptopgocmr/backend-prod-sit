@@ -8,6 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('salary_payments')) {
+            return;
+        }
         Schema::create('salary_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('users')->restrictOnDelete();
