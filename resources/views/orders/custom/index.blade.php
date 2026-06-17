@@ -131,12 +131,22 @@
                                     <a href="{{ route('custom-orders.show', $order) }}" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Voir">
                                         <i data-lucide="eye" style="width:15px;height:15px"></i>
                                     </a>
+                                    @if(auth()->user()->isAdmin())
                                     <a href="{{ route('custom-orders.edit', $order) }}" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Modifier">
                                         <i data-lucide="edit-2" style="width:15px;height:15px"></i>
                                     </a>
+                                    @endif
                                     <a href="{{ route('custom-orders.fiche', $order) }}" target="_blank" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Fiche atelier">
                                         <i data-lucide="printer" style="width:15px;height:15px"></i>
                                     </a>
+                                    @if(auth()->user()->isAdmin())
+                                    <form method="POST" action="{{ route('custom-orders.destroy', $order) }}" onsubmit="return confirm('Supprimer cette commande ?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Supprimer">
+                                            <i data-lucide="trash-2" style="width:15px;height:15px"></i>
+                                        </button>
+                                    </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

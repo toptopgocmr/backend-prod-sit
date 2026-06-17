@@ -320,6 +320,7 @@ class CustomOrderController extends Controller
 
     public function edit(CustomOrder $customOrder)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $clients    = Client::orderBy('first_name')->get();
         $couturiers = User::where('role', 'couturier')->get();
         $fabrics    = Product::active()->tissus()->get();
@@ -328,6 +329,7 @@ class CustomOrderController extends Controller
 
     public function update(Request $request, CustomOrder $customOrder)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $validated = $request->validate([
             'client_id'             => 'required|exists:clients,id',
             'gender'                => 'required|in:homme,femme,enfant',
@@ -508,6 +510,7 @@ class CustomOrderController extends Controller
 
     public function destroy(CustomOrder $customOrder)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         if (in_array($customOrder->status, ['en_couture','finition','controle_qualite'])) {
             return back()->with('error', 'Impossible de supprimer une commande en cours de production.');
         }

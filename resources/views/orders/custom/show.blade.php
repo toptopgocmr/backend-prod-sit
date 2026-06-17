@@ -41,10 +41,21 @@
                     <i data-lucide="download" class="w-4 h-4"></i> Télécharger PDF
                 </a>
                 {{-- Modifier --}}
+                @if(auth()->user()->isAdmin())
                 <a href="{{ route('custom-orders.edit', $customOrder) }}"
                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors">
                     <i data-lucide="edit-2" class="w-4 h-4"></i> Modifier
                 </a>
+                {{-- Supprimer --}}
+                <form method="POST" action="{{ route('custom-orders.destroy', $customOrder) }}"
+                      onsubmit="return confirm('Supprimer définitivement cette commande ?')">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-sm font-semibold text-red-600 hover:bg-red-100 transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Supprimer
+                    </button>
+                </form>
+                @endif
             </div>
         </div>
 
