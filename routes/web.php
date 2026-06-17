@@ -60,6 +60,9 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
     // ─── Commandes sur mesure ──────────────────────────────────────
     Route::get('custom-orders/export', [CustomOrderController::class, 'export'])->name('custom-orders.export');
+    Route::get('custom-orders/corbeille', [CustomOrderController::class, 'corbeille'])->name('custom-orders.corbeille');
+    Route::put('custom-orders/{id}/restaurer', [CustomOrderController::class, 'restaurer'])->name('custom-orders.restaurer');
+    Route::delete('custom-orders/{id}/purger', [CustomOrderController::class, 'purger'])->name('custom-orders.purger');
     Route::resource('custom-orders', CustomOrderController::class);
     Route::put('custom-orders/{customOrder}/status', [CustomOrderController::class, 'updateStatus'])->name('custom-orders.status');
     Route::put('custom-orders/{customOrder}/assign', [CustomOrderController::class, 'assignCouturier'])->name('custom-orders.assign');

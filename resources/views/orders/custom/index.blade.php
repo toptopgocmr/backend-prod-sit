@@ -24,6 +24,12 @@
                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors">
                 <i data-lucide="file-text" class="w-4 h-4"></i> PDF
             </a>
+            @if(auth()->user()->isAdmin())
+            <a href="{{ route('custom-orders.corbeille') }}"
+               class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Corbeille
+            </a>
+            @endif
             <a href="{{ route('quotes.create') }}"
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                 <i data-lucide="file-text" class="w-4 h-4"></i> Nouveau devis

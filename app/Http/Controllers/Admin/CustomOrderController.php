@@ -514,7 +514,36 @@ class CustomOrderController extends Controller
         if (in_array($customOrder->status, ['en_couture','finition','controle_qualite'])) {
             return back()->with('error', 'Impossible de supprimer une commande en cours de production.');
         }
-        $customOrder->delete();
-        return redirect()->route('custom-orders.index')->with('success', 'Commande supprimée.');
+        $customOrder->delete(); // soft delete → va dans la corbeille
+        return redirect()->route('custom-orders.index')
+            ->with('success', '🗑 Commande déplacée dans la corbeille. Vous pouvez la restaurer depuis la corbeille.');
+    }
+
+    // ── CORBEILLE ────────────────────────────────────────────
+    public function corbeille()
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+        $orders = CustomOrder::onlyTrashed()
+            ->with(['client','couturier'])
+            ->latest('deleted_at')
+            ->paginate(20);
+        return view('orders.custom.corbeille', compact('orders'));
+    }
+
+    public function restaurer(int $id)
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+        $order = CustomOrder::onlyTrashed()->findOrFail($id);
+        $order->restore();
+        return back()->with('success', '✅ Commande ' . $order->reference . ' restaurée avec succès.');
+    }
+
+    public function purger(int $id)
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+        $order = CustomOrder::onlyTrashed()->findOrFail($id);
+        $order->statuses()->delete();
+        $order->forceDelete(); // suppression définitive
+        return back()->with('success', '🗑 Commande supprimée définitivement.');
     }
 }
