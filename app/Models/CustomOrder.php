@@ -13,19 +13,27 @@ class CustomOrder extends Model
 
     protected $fillable = [
         'reference','client_id','measurement_id','assigned_to','cashier_id',
+        // Commande individuelle
         'model_name','model_photo','model_description','gender','garment_type',
+        // Commande groupe
+        'is_group_order','group_name','group_occasion','group_members','model_photos',
+        // Tissu & accessoires
         'fabric_product_id','fabric_meters','fabric_color','accessories',
+        // Statuts & paiement
         'status','payment_status','payment_method',
         'fabric_cost','labor_cost','accessories_cost','total','amount_paid','deposit',
         'delivery_date','started_at','completed_at','delivered_at','notes',
     ];
 
     protected $casts = [
-        'accessories'  => 'array',
-        'delivery_date'=> 'date',
-        'started_at'   => 'datetime',
-        'completed_at' => 'datetime',
-        'delivered_at' => 'datetime',
+        'accessories'   => 'array',
+        'group_members' => 'array',
+        'model_photos'  => 'array',
+        'is_group_order'=> 'boolean',
+        'delivery_date' => 'date',
+        'started_at'    => 'datetime',
+        'completed_at'  => 'datetime',
+        'delivered_at'  => 'datetime',
     ];
 
     protected static function boot() {

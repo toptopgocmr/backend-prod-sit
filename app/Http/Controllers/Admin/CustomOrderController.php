@@ -66,37 +66,57 @@ class CustomOrderController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $isGroup = $request->boolean('is_group_order');
+
+        // ── Règles de validation selon le type de commande ──────────────
+        $rules = [
             'client_id'          => 'required|exists:clients,id',
-            'gender'             => 'required|in:homme,femme,enfant',
-            'garment_type'       => 'required|string',
-            'model_name'         => 'nullable|string|max:255',
             'model_description'  => 'nullable|string',
-            'model_photo'        => 'nullable|image|max:2048',
             'fabric_product_id'  => 'nullable|exists:products,id',
             'fabric_meters'      => 'nullable|numeric|min:0.5',
             'fabric_color'       => 'nullable|string',
             'accessories'        => 'nullable|array',
-            'labor_cost'         => 'required|numeric|min:0',
             'deposit'            => 'nullable|numeric|min:0',
             'payment_method'     => 'nullable|in:cash,mobile_money,card,credit',
             'delivery_date'      => 'nullable|date|after:today',
             'assigned_to'        => 'nullable|exists:users,id',
-            'measurement_id'     => 'nullable|exists:measurements,id',
-            'new_measurement_label' => 'nullable|string|max:255',
-            'new_measurement'    => 'nullable|array',
-            'manual_measurement' => 'nullable|array',
             'notes'              => 'nullable|string',
-        ]);
+        ];
 
-        DB::transaction(function () use ($validated, $request) {
-            // Calcul coûts
+        if ($isGroup) {
+            $rules = array_merge($rules, [
+                'group_name'         => 'required|string|max:255',
+                'group_occasion'     => 'nullable|string|max:255',
+                'group_members'      => 'required|string', // JSON encodé
+                'labor_cost'         => 'nullable|numeric|min:0',
+                'model_photos.*'     => 'nullable|image|max:5120',
+            ]);
+        } else {
+            $rules = array_merge($rules, [
+                'gender'                => 'required|in:homme,femme,enfant',
+                'garment_type'          => 'required|string',
+                'model_name'            => 'nullable|string|max:255',
+                'model_photo'           => 'nullable|image|max:2048',
+                'labor_cost'            => 'required|numeric|min:0',
+                'measurement_id'        => 'nullable|exists:measurements,id',
+                'new_measurement_label' => 'nullable|string|max:255',
+                'new_measurement'       => 'nullable|array',
+                'manual_measurement'    => 'nullable|array',
+            ]);
+        }
+
+        $validated = $request->validate($rules);
+
+        DB::transaction(function () use ($validated, $request, $isGroup) {
+
+            // ── Coût tissu ────────────────────────────────────────────────
             $fabricCost = 0;
             if (!empty($validated['fabric_product_id']) && !empty($validated['fabric_meters'])) {
-                $fabric = Product::find($validated['fabric_product_id']);
+                $fabric     = Product::find($validated['fabric_product_id']);
                 $fabricCost = $fabric->price_per_meter * $validated['fabric_meters'];
             }
 
+            // ── Coût accessoires ─────────────────────────────────────────
             $accessoriesCost = 0;
             if (!empty($validated['accessories'])) {
                 foreach ($validated['accessories'] as $acc) {
@@ -104,64 +124,128 @@ class CustomOrderController extends Controller
                 }
             }
 
-            $total = $fabricCost + $validated['labor_cost'] + $accessoriesCost;
             $deposit = $validated['deposit'] ?? 0;
 
-            // ── Gestion des mesures avant création ──
-            $measurementId = $validated['measurement_id'] ?? null;
+            // ════════════════════════════════════════════════════════════
+            // CAS GROUPE
+            // ════════════════════════════════════════════════════════════
+            if ($isGroup) {
 
-            // Mode "Nouvelle fiche" : new_measurement[...] avec label
-            $newMeasurementData = array_filter(
-                $request->input('new_measurement', []),
-                fn($v) => $v !== null && $v !== ''
-            );
-            $newLabel = $request->input('new_measurement_label');
+                // Décoder les membres (envoyés en JSON)
+                $groupMembers = json_decode($request->input('group_members', '[]'), true) ?? [];
 
-            if ($newLabel && !empty($newMeasurementData)) {
-                $clientId = $validated['client_id'];
-                $measurement = Measurement::create([
-                    'client_id'  => $clientId,
-                    'label'      => $newLabel,
-                    'values'     => $newMeasurementData,
-                    'is_default' => $request->boolean('new_measurement_default'),
+                // Calcul main d'œuvre agrégée depuis les vêtements de chaque membre
+                $laborCost = 0;
+                foreach ($groupMembers as $member) {
+                    foreach ($member['garments'] ?? [] as $garment) {
+                        $laborCost += ($garment['labor_cost'] ?? 0) * ($garment['qty'] ?? 1);
+                    }
+                }
+                // MO globale saisie en plus (tissu, finitions)
+                $laborCost += ($validated['labor_cost'] ?? 0);
+
+                $total = $fabricCost + $laborCost + $accessoriesCost;
+
+                $order = CustomOrder::create([
+                    'client_id'         => $validated['client_id'],
+                    'is_group_order'    => true,
+                    'group_name'        => $validated['group_name'],
+                    'group_occasion'    => $validated['group_occasion'] ?? null,
+                    'group_members'     => $groupMembers,
+                    'model_description' => $validated['model_description'] ?? null,
+                    'fabric_product_id' => $validated['fabric_product_id'] ?? null,
+                    'fabric_meters'     => $validated['fabric_meters'] ?? null,
+                    'fabric_color'      => $validated['fabric_color'] ?? null,
+                    'fabric_cost'       => $fabricCost,
+                    'labor_cost'        => $laborCost,
+                    'accessories'       => $validated['accessories'] ?? null,
+                    'accessories_cost'  => $accessoriesCost,
+                    'total'             => $total,
+                    'deposit'           => $deposit,
+                    'amount_paid'       => $deposit,
+                    'payment_method'    => $validated['payment_method'] ?? null,
+                    'payment_status'    => $deposit >= $total ? 'paid' : ($deposit > 0 ? 'partial' : 'unpaid'),
+                    'delivery_date'     => $validated['delivery_date'] ?? null,
+                    'assigned_to'       => $validated['assigned_to'] ?? null,
+                    'cashier_id'        => auth()->id(),
+                    'status'            => 'recu',
+                    'notes'             => $validated['notes'] ?? null,
+                    // Champs individuels non applicables au groupe
+                    'gender'        => null,
+                    'garment_type'  => null,
                 ]);
-                $measurementId = $measurement->id;
-            }
 
-            // Mode "Saisie directe" : manual_measurement[...] — on crée aussi une fiche auto
-            $manualData = array_filter(
-                $request->input('manual_measurement', []),
-                fn($v) => $v !== null && $v !== ''
-            );
-            if (empty($measurementId) && !empty($manualData)) {
-                $measurement = Measurement::create([
-                    'client_id'  => $validated['client_id'],
-                    'label'      => 'Saisie directe — ' . now()->format('d/m/Y'),
-                    'values'     => $manualData,
-                    'is_default' => false,
+                // Upload photos multiples du modèle (jusqu'à 8)
+                if ($request->hasFile('model_photos')) {
+                    $paths = [];
+                    foreach ($request->file('model_photos') as $photo) {
+                        $paths[] = $photo->store('custom_orders/models', 'public');
+                    }
+                    $order->update(['model_photos' => $paths]);
+                }
+
+            // ════════════════════════════════════════════════════════════
+            // CAS INDIVIDUEL (comportement original)
+            // ════════════════════════════════════════════════════════════
+            } else {
+
+                $laborCost = $validated['labor_cost'];
+                $total     = $fabricCost + $laborCost + $accessoriesCost;
+
+                // Gestion des mesures
+                $measurementId = $validated['measurement_id'] ?? null;
+
+                $newMeasurementData = array_filter(
+                    $request->input('new_measurement', []),
+                    fn($v) => $v !== null && $v !== ''
+                );
+                $newLabel = $request->input('new_measurement_label');
+
+                if ($newLabel && !empty($newMeasurementData)) {
+                    $measurement = Measurement::create([
+                        'client_id'  => $validated['client_id'],
+                        'label'      => $newLabel,
+                        'values'     => $newMeasurementData,
+                        'is_default' => $request->boolean('new_measurement_default'),
+                    ]);
+                    $measurementId = $measurement->id;
+                }
+
+                $manualData = array_filter(
+                    $request->input('manual_measurement', []),
+                    fn($v) => $v !== null && $v !== ''
+                );
+                if (empty($measurementId) && !empty($manualData)) {
+                    $measurement = Measurement::create([
+                        'client_id'  => $validated['client_id'],
+                        'label'      => 'Saisie directe — ' . now()->format('d/m/Y'),
+                        'values'     => $manualData,
+                        'is_default' => false,
+                    ]);
+                    $measurementId = $measurement->id;
+                }
+
+                $order = CustomOrder::create([
+                    ...$validated,
+                    'is_group_order'    => false,
+                    'measurement_id'    => $measurementId,
+                    'fabric_cost'       => $fabricCost,
+                    'accessories_cost'  => $accessoriesCost,
+                    'total'             => $total,
+                    'amount_paid'       => $deposit,
+                    'cashier_id'        => auth()->id(),
+                    'status'            => 'recu',
+                    'payment_status'    => $deposit >= $total ? 'paid' : ($deposit > 0 ? 'partial' : 'unpaid'),
                 ]);
-                $measurementId = $measurement->id;
+
+                // Upload photo modèle unique
+                if ($request->hasFile('model_photo')) {
+                    $path = $request->file('model_photo')->store('custom_orders/models', 'public');
+                    $order->update(['model_photo' => $path]);
+                }
             }
 
-            $order = CustomOrder::create([
-                ...$validated,
-                'measurement_id'    => $measurementId,
-                'fabric_cost'       => $fabricCost,
-                'accessories_cost'  => $accessoriesCost,
-                'total'             => $total,
-                'amount_paid'       => $deposit,
-                'cashier_id'        => auth()->id(),
-                'status'            => 'recu',
-                'payment_status'    => $deposit >= $total ? 'paid' : ($deposit > 0 ? 'partial' : 'unpaid'),
-            ]);
-
-            // Upload photo modèle
-            if ($request->hasFile('model_photo')) {
-                $path = $request->file('model_photo')->store('custom_orders/models', 'public');
-                $order->update(['model_photo' => $path]);
-            }
-
-            // Déduire tissu du stock
+            // ── Déduire tissu du stock (commun aux deux modes) ───────────
             if (!empty($validated['fabric_product_id']) && !empty($validated['fabric_meters'])) {
                 $this->stockService->deduct(
                     $validated['fabric_product_id'],
@@ -172,12 +256,14 @@ class CustomOrderController extends Controller
                 );
             }
 
-            // Log statut initial
+            // ── Log statut initial ───────────────────────────────────────
             CustomOrderStatus::create([
                 'custom_order_id' => $order->id,
                 'user_id'         => auth()->id(),
                 'status'          => 'recu',
-                'comment'         => 'Commande créée',
+                'comment'         => $isGroup
+                    ? "Commande groupe créée — {$order->group_name}"
+                    : 'Commande créée',
             ]);
         });
 
