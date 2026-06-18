@@ -190,6 +190,61 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
                 </div>
             </div>
 
+            {{-- Accessoires --}}
+            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+                    <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
+                        <i data-lucide="puzzle" class="w-4 h-4 text-blue-600"></i>
+                        Accessoires
+                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold"
+                              x-text="accessories.length"></span>
+                    </h3>
+                    <button type="button" x-on:click="addAccessory"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors">
+                        <i data-lucide="plus" style="width:13px;height:13px"></i>
+                        Ajouter
+                    </button>
+                </div>
+
+                <div x-show="accessories.length === 0" class="px-5 py-6 text-center text-gray-400 text-xs">
+                    Boutons, fermetures, broderies, etc. — Ajoutez les accessoires inclus dans le devis.
+                </div>
+
+                <div class="divide-y divide-gray-50">
+                    <template x-for="(acc, index) in accessories" :key="acc.id">
+                        <div class="px-5 py-3 flex items-center gap-3">
+                            <div class="flex-1">
+                                <input type="text" :name="`accessories[${index}][name]`"
+                                       x-model="acc.name" placeholder="Nom de l'accessoire"
+                                       class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500">
+                            </div>
+                            <div class="w-20">
+                                <input type="number" :name="`accessories[${index}][qty]`"
+                                       x-model.number="acc.qty" x-on:input="calcTotals"
+                                       min="1" placeholder="Qté"
+                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                            </div>
+                            <div class="w-28">
+                                <input type="number" :name="`accessories[${index}][price]`"
+                                       x-model.number="acc.price" x-on:input="calcTotals"
+                                       min="0" step="100" placeholder="Prix"
+                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                            </div>
+                            <button type="button" x-on:click="removeAccessory(index)"
+                                    class="w-6 h-6 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors">
+                                <i data-lucide="x" style="width:13px;height:13px"></i>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <div x-show="accessories.length > 0" class="px-5 py-3 border-t border-gray-50 flex justify-end">
+                    <span class="text-xs text-gray-500">Total accessoires :
+                        <strong class="text-dark" x-text="fmt(accessoriesCost)"></strong>
+                    </span>
+                </div>
+            </div>
+
             {{-- Validité & livraison --}}
             <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                 <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
@@ -231,6 +286,10 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>Tissu</span>
                             <span class="font-semibold text-dark" x-text="fmt(fabricCost)"></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>Accessoires</span>
+                            <span class="font-semibold text-dark" x-text="fmt(accessoriesCost)"></span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500">
                             <span>Main d'œuvre <span class="text-red-400">*</span></span>
@@ -289,13 +348,24 @@ function quoteForm() {
     return {
         clientId: '', gender: 'femme', fabricId: '', fabricMeters: 0, laborCost: 0,
         fabricCost: 0, total: 0,
+        accessories: [], accCounter: 0, accessoriesCost: 0,
 
         get selectedFabric() { return FABRICS.find(f => f.id == this.fabricId) || null; },
+
+        addAccessory() {
+            this.accessories.push({ id: ++this.accCounter, name: '', qty: 1, price: 0 });
+            this.$nextTick(() => lucide.createIcons());
+        },
+        removeAccessory(index) {
+            this.accessories.splice(index, 1);
+            this.calcTotals();
+        },
 
         calcTotals() {
             this.fabricCost = (this.fabricId && this.fabricMeters > 0 && this.selectedFabric)
                 ? this.selectedFabric.price_per_meter * this.fabricMeters : 0;
-            this.total = this.fabricCost + (this.laborCost || 0);
+            this.accessoriesCost = this.accessories.reduce((s, a) => s + ((a.price||0) * (a.qty||1)), 0);
+            this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;
         },
 
         fmt(v) { return new Intl.NumberFormat('fr-FR').format(Math.round(v || 0)) + ' ' + CURRENCY; },
