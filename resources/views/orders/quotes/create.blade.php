@@ -28,6 +28,7 @@ $clientsJson = $clients->map(fn($c) => [
 const FABRICS  = {!! json_encode($fabricsJson) !!};
 const CLIENTS  = {!! json_encode($clientsJson) !!};
 const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
+const GARMENT_TYPES = {!! json_encode($garmentTypes) !!};
 </script>
 
 <form method="POST" action="{{ route('quotes.store') }}" enctype="multipart/form-data"
@@ -112,125 +113,222 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
                 </div>
             </div>
 
-            {{-- Modèle --}}
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-                <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
-                    <i data-lucide="shirt" class="w-4 h-4 text-blue-600"></i> Modèle & vêtement
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Type de vêtement</label>
-                        <select name="garment_type"
-                                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                            <option value="">— Choisir —</option>
-                            @foreach($garmentTypes as $val => $lbl)
-                                <option value="{{ $val }}">{{ $lbl }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du modèle</label>
-                        <input type="text" name="model_name" value="{{ old('model_name') }}"
-                               placeholder="Ex : Robe soirée, Boubou homme..."
-                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description</label>
-                    <textarea name="model_description" rows="3" placeholder="Détails de coupe, style, finitions..."
-                              class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">{{ old('model_description') }}</textarea>
-                </div>
-            </div>
-
-            {{-- Tissu --}}
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-                <div class="flex items-center justify-between">
+            {{-- ═══════════════════════════════════════════════
+                 VÊTEMENTS (multi)
+            ════════════════════════════════════════════════ --}}
+            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
                     <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
-                        <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Tissu (optionnel)
+                        <i data-lucide="shirt" class="w-4 h-4 text-blue-600"></i>
+                        Vêtements
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold"
+                              x-text="garments.length"></span>
                     </h3>
-                    <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
-                        <button type="button" x-on:click="fabricMode = 'stock'; fabricName = ''; fabricPricePerMeter = 0; calcTotals()"
-                                class="px-3 py-1 rounded-md text-xs font-semibold transition-all"
-                                :class="fabricMode === 'stock' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
-                            En stock
-                        </button>
-                        <button type="button" x-on:click="fabricMode = 'custom'; fabricId = ''; calcTotals()"
-                                class="px-3 py-1 rounded-md text-xs font-semibold transition-all"
-                                :class="fabricMode === 'custom' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
-                            Hors stock
-                        </button>
-                    </div>
+                    <button type="button" x-on:click="addGarment()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors">
+                        <i data-lucide="plus" style="width:13px;height:13px"></i>
+                        Ajouter un vêtement
+                    </button>
                 </div>
 
-                <div x-show="fabricMode === 'stock'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tissu en stock</label>
-                        <div x-data="searchSelect({ items: [{id:'',name:'— Aucun —',sub:''}].concat(FABRICS.map(f=>({id:f.id,name:f.name,sub:f.price_per_meter.toLocaleString('fr-FR')+' FCFA/m — '+f.available_meters+'m dispo'}))), labelKey: 'name', subKey: 'sub', placeholder: 'Rechercher un tissu...', inputName: 'fabric_product_id', onSelect: (id) => { fabricId = id; calcTotals(); } })" class="relative">
-                            <input type="hidden" name="fabric_product_id" x-model="selectedId">
-                            <button type="button" x-on:click="open = !open"
-                                    class="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                                <span :class="selectedId ? 'text-dark' : 'text-gray-400'" class="truncate"
-                                      x-text="selectedId ? items.find(i=>i.id==selectedId)?.name : '— Aucun —'"></span>
-                                <i data-lucide="chevrons-up-down" style="width:14px;height:14px" class="text-gray-400 shrink-0 ml-2"></i>
-                            </button>
-                            <div x-show="open" x-on:click.outside="open=false" x-transition
-                                 class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                                <div class="p-2 border-b border-gray-100">
-                                    <input type="text" x-model="search" x-on:input="filterItems" placeholder="Filtrer..."
-                                           class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none">
-                                </div>
-                                <ul class="max-h-48 overflow-y-auto">
-                                    <template x-for="item in filtered" :key="item.id">
-                                        <li x-on:click="select(item)" class="px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors">
-                                            <p class="text-sm font-semibold text-dark" x-text="item.name"></p>
-                                            <p x-show="item.sub" class="text-xs text-gray-400" x-text="item.sub"></p>
-                                        </li>
-                                    </template>
-                                </ul>
+                <div class="divide-y divide-gray-50">
+                    <template x-for="(garment, gi) in garments" :key="garment._id">
+                        <div class="p-5 space-y-4">
+
+                            {{-- Header vêtement --}}
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
+                                    <i data-lucide="shirt" style="width:12px;height:12px"></i>
+                                    Vêtement <span x-text="gi + 1"></span>
+                                </span>
+                                <button type="button" x-show="garments.length > 1"
+                                        x-on:click="removeGarment(gi)"
+                                        class="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
+                                    <i data-lucide="trash-2" style="width:13px;height:13px"></i>
+                                    Supprimer
+                                </button>
                             </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
-                        <input type="number" x-bind:name="fabricMode === 'stock' ? 'fabric_meters' : null" x-model.number="fabricMeters" x-on:input="calcTotals"
-                               min="0" step="0.5" placeholder="0.0"
-                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                    </div>
-                </div>
 
-                <div x-show="fabricMode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du tissu</label>
-                        <input type="text" x-bind:name="fabricMode === 'custom' ? 'fabric_name' : null" x-model="fabricName"
-                               placeholder="Ex : Bazin riche import..."
-                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Prix / mètre</label>
-                        <div class="flex items-center gap-1">
-                            <input type="number" x-bind:name="fabricMode === 'custom' ? 'fabric_price_per_meter' : null" x-model.number="fabricPricePerMeter" x-on:input="calcTotals"
-                                   min="0" step="100" placeholder="0"
-                                   class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                            <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
-                        <input type="number" x-bind:name="fabricMode === 'custom' ? 'fabric_meters' : null" x-model.number="fabricMeters" x-on:input="calcTotals"
-                               min="0" step="0.5" placeholder="0.0"
-                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                    </div>
-                </div>
+                            {{-- Champs vêtement --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Type de vêtement</label>
+                                    <select :name="`garments[${gi}][garment_type]`" x-model="garment.garment_type"
+                                            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                        <option value="">— Choisir —</option>
+                                        <template x-for="[val, lbl] in Object.entries(GARMENT_TYPES)" :key="val">
+                                            <option :value="val" x-text="lbl" :selected="garment.garment_type === val"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du modèle</label>
+                                    <input type="text" :name="`garments[${gi}][model_name]`" x-model="garment.model_name"
+                                           placeholder="Ex : Robe soirée, Boubou..."
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
+                                    <input type="number" :name="`garments[${gi}][qty]`" x-model.number="garment.qty"
+                                           min="1" value="1"
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description / détails de coupe</label>
+                                <textarea :name="`garments[${gi}][model_description]`" x-model="garment.model_description"
+                                          rows="2" placeholder="Coupe, style, finitions, mensurations particulières..."
+                                          class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"></textarea>
+                            </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Couleur / précision tissu</label>
-                    <input type="text" name="fabric_color" value="{{ old('fabric_color') }}"
-                           placeholder="Ex : Blanc cassé, imprimé wax..."
-                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                            {{-- ── TISSUS (multi par vêtement) ── --}}
+                            <div class="rounded-xl border border-gray-100 overflow-hidden">
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between">
+                                    <span class="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                                        <i data-lucide="layers" style="width:13px;height:13px"></i>
+                                        Tissus
+                                        <span class="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                                              x-text="garment.fabrics.length"></span>
+                                    </span>
+                                    <button type="button" x-on:click="addFabric(gi)"
+                                            class="inline-flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg font-semibold transition-colors">
+                                        <i data-lucide="plus" style="width:12px;height:12px"></i> Tissu
+                                    </button>
+                                </div>
+
+                                <div x-show="garment.fabrics.length === 0" class="px-4 py-4 text-center text-xs text-gray-400">
+                                    Aucun tissu — cliquez sur « + Tissu » pour en ajouter.
+                                </div>
+
+                                <div class="divide-y divide-gray-50">
+                                    <template x-for="(fabric, fi) in garment.fabrics" :key="fabric._id">
+                                        <div class="p-4 space-y-3">
+
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-semibold text-indigo-600"
+                                                      x-text="`Tissu ${fi + 1}`"></span>
+                                                <div class="flex items-center gap-3">
+                                                    {{-- Toggle En stock / Hors stock --}}
+                                                    <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
+                                                        <button type="button"
+                                                                x-on:click="fabric.mode = 'stock'; calcTotals()"
+                                                                class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                                                :class="fabric.mode === 'stock' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                                                            En stock
+                                                        </button>
+                                                        <button type="button"
+                                                                x-on:click="fabric.mode = 'custom'; calcTotals()"
+                                                                class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                                                :class="fabric.mode === 'custom' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                                                            Hors stock
+                                                        </button>
+                                                    </div>
+                                                    <button type="button" x-show="garment.fabrics.length > 1"
+                                                            x-on:click="removeFabric(gi, fi)"
+                                                            class="w-6 h-6 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors">
+                                                        <i data-lucide="x" style="width:13px;height:13px"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {{-- Mode En stock --}}
+                                            <div x-show="fabric.mode === 'stock'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <div class="sm:col-span-2"
+                                                     x-data="fabricSelect(fabric)"
+                                                     x-init="syncFabric(fabric)">
+                                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tissu en stock</label>
+                                                    <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][fabric_product_id]`"
+                                                           x-model="fabric.fabric_product_id">
+                                                    <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][mode]`" value="stock">
+                                                    <div class="relative">
+                                                        <button type="button" x-on:click="fsOpen = !fsOpen"
+                                                                class="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                            <span :class="fabric.fabric_product_id ? 'text-dark' : 'text-gray-400'" class="truncate text-xs"
+                                                                  x-text="fabric.fabric_product_id ? (FABRICS.find(f=>f.id==fabric.fabric_product_id)?.name ?? '— Aucun —') : '— Aucun —'"></span>
+                                                            <i data-lucide="chevrons-up-down" style="width:13px;height:13px" class="text-gray-400 shrink-0 ml-1"></i>
+                                                        </button>
+                                                        <div x-show="fsOpen" x-on:click.outside="fsOpen=false" x-transition
+                                                             class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                                            <div class="p-2 border-b border-gray-100">
+                                                                <input type="text" x-model="fsSearch" x-on:input="filterFabrics()" placeholder="Filtrer..."
+                                                                       class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none">
+                                                            </div>
+                                                            <ul class="max-h-40 overflow-y-auto">
+                                                                <li x-on:click="selectFabric(null, fabric); fsOpen=false"
+                                                                    class="px-3 py-2 text-xs text-gray-400 hover:bg-gray-50 cursor-pointer">— Aucun —</li>
+                                                                <template x-for="f in fsFiltered" :key="f.id">
+                                                                    <li x-on:click="selectFabric(f, fabric); fsOpen=false"
+                                                                        class="px-3 py-2.5 hover:bg-blue-50 cursor-pointer"
+                                                                        :class="fabric.fabric_product_id == f.id ? 'bg-blue-50' : ''">
+                                                                        <p class="text-xs font-semibold text-dark" x-text="f.name"></p>
+                                                                        <p class="text-xs text-gray-400"
+                                                                           x-text="f.price_per_meter.toLocaleString('fr-FR') + ' FCFA/m — ' + f.available_meters + 'm dispo'"></p>
+                                                                    </li>
+                                                                </template>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
+                                                    <input type="number" :name="`garments[${gi}][fabrics][${fi}][fabric_meters]`"
+                                                           x-model.number="fabric.fabric_meters" x-on:input="calcTotals()"
+                                                           min="0" step="0.5" placeholder="0.0"
+                                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                </div>
+                                            </div>
+
+                                            {{-- Mode Hors stock --}}
+                                            <div x-show="fabric.mode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][mode]`" value="custom">
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du tissu</label>
+                                                    <input type="text" :name="`garments[${gi}][fabrics][${fi}][fabric_name]`"
+                                                           x-model="fabric.fabric_name"
+                                                           placeholder="Ex : Bazin riche..."
+                                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Prix / mètre</label>
+                                                    <div class="flex items-center gap-1">
+                                                        <input type="number" :name="`garments[${gi}][fabrics][${fi}][fabric_price_per_meter]`"
+                                                               x-model.number="fabric.fabric_price_per_meter" x-on:input="calcTotals()"
+                                                               min="0" step="100" placeholder="0"
+                                                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                        <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
+                                                    <input type="number" :name="`garments[${gi}][fabrics][${fi}][fabric_meters]`"
+                                                           x-model.number="fabric.fabric_meters" x-on:input="calcTotals()"
+                                                           min="0" step="0.5" placeholder="0.0"
+                                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                </div>
+                                            </div>
+
+                                            {{-- Couleur (commun aux deux modes) --}}
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Couleur / précision</label>
+                                                <input type="text" :name="`garments[${gi}][fabrics][${fi}][fabric_color]`"
+                                                       x-model="fabric.fabric_color"
+                                                       placeholder="Ex : Blanc cassé, imprimé wax..."
+                                                       class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                            </div>
+
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            {{-- fin tissus --}}
+
+                        </div>
+                    </template>
                 </div>
             </div>
+            {{-- fin vêtements --}}
 
-            {{-- Accessoires --}}
+            {{-- Accessoires (communs au devis) --}}
             <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
                     <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
@@ -324,7 +422,12 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
 
                     <div class="space-y-2">
                         <div class="flex justify-between text-sm text-gray-500">
-                            <span>Tissu</span>
+                            <span>Vêtements</span>
+                            <span class="font-semibold text-blue-600 text-xs"
+                                  x-text="garments.length + ' article' + (garments.length > 1 ? 's' : '')"></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>Tissu total</span>
                             <span class="font-semibold text-dark" x-text="fmt(fabricCost)"></span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
@@ -365,6 +468,36 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
 </form>
 
 <script>
+// ── Composant dropdown tissu en stock (par fabric slot) ──────────────────────
+function fabricSelect(fabric) {
+    return {
+        fsOpen: false,
+        fsSearch: '',
+        fsFiltered: FABRICS,
+        syncFabric(f) { this.fsFiltered = FABRICS; },
+        filterFabrics() {
+            const q = this.fsSearch.toLowerCase();
+            this.fsFiltered = FABRICS.filter(f =>
+                f.name.toLowerCase().includes(q)
+            );
+        },
+        selectFabric(f, fabric) {
+            if (!f) {
+                fabric.fabric_product_id = null;
+            } else {
+                fabric.fabric_product_id = f.id;
+                // Pré-remplir le prix pour affichage (calcul fait côté Alpine)
+                fabric._stockPrice = f.price_per_meter;
+            }
+            this.$dispatch('fabric-selected');
+            // Recalcul global
+            const form = Alpine.$data(document.getElementById('quoteForm'));
+            if (form) form.calcTotals();
+        },
+    };
+}
+
+// ── Composant searchSelect (clients) ────────────────────────────────────────
 function searchSelect({ items, labelKey, subKey, placeholder, inputName, onSelect }) {
     return {
         items, labelKey, subKey, placeholder, inputName, onSelect,
@@ -384,15 +517,47 @@ function searchSelect({ items, labelKey, subKey, placeholder, inputName, onSelec
     };
 }
 
+// ── Composant principal quoteForm ─────────────────────────────────────────
 function quoteForm() {
+    let _id = 0;
+    const uid = () => ++_id;
+
+    function newFabric() {
+        return { _id: uid(), mode: 'stock', fabric_product_id: null, _stockPrice: 0,
+                 fabric_name: '', fabric_price_per_meter: 0, fabric_meters: 0, fabric_color: '' };
+    }
+    function newGarment() {
+        return { _id: uid(), garment_type: '', model_name: '', model_description: '',
+                 qty: 1, fabrics: [newFabric()] };
+    }
+
     return {
-        clientId: '', gender: 'femme', fabricId: '', fabricMeters: 0, laborCost: 0,
-        fabricCost: 0, total: 0,
-        fabricMode: 'stock', fabricName: '', fabricPricePerMeter: 0,
-        accessories: [], accCounter: 0, accessoriesCost: 0,
+        clientId: '', gender: 'femme',
+        garments: [newGarment()],
+        accessories: [], accCounter: 0,
+        laborCost: 0, fabricCost: 0, accessoriesCost: 0, total: 0,
 
-        get selectedFabric() { return FABRICS.find(f => f.id == this.fabricId) || null; },
+        // ── Vêtements ──
+        addGarment() {
+            this.garments.push(newGarment());
+            this.$nextTick(() => lucide.createIcons());
+        },
+        removeGarment(gi) {
+            this.garments.splice(gi, 1);
+            this.calcTotals();
+        },
 
+        // ── Tissus ──
+        addFabric(gi) {
+            this.garments[gi].fabrics.push(newFabric());
+            this.$nextTick(() => lucide.createIcons());
+        },
+        removeFabric(gi, fi) {
+            this.garments[gi].fabrics.splice(fi, 1);
+            this.calcTotals();
+        },
+
+        // ── Accessoires ──
         addAccessory() {
             this.accessories.push({ id: ++this.accCounter, name: '', qty: 1, price: 0 });
             this.$nextTick(() => lucide.createIcons());
@@ -402,14 +567,21 @@ function quoteForm() {
             this.calcTotals();
         },
 
+        // ── Calcul totaux ──
         calcTotals() {
-            if (this.fabricMode === 'stock') {
-                this.fabricCost = (this.fabricId && this.fabricMeters > 0 && this.selectedFabric)
-                    ? this.selectedFabric.price_per_meter * this.fabricMeters : 0;
-            } else {
-                this.fabricCost = (this.fabricMeters > 0 && this.fabricPricePerMeter > 0)
-                    ? this.fabricPricePerMeter * this.fabricMeters : 0;
+            let fc = 0;
+            for (const g of this.garments) {
+                for (const f of g.fabrics) {
+                    const meters = parseFloat(f.fabric_meters) || 0;
+                    if (f.mode === 'stock' && f.fabric_product_id) {
+                        const product = FABRICS.find(p => p.id == f.fabric_product_id);
+                        fc += (product?.price_per_meter ?? 0) * meters;
+                    } else if (f.mode === 'custom') {
+                        fc += (parseFloat(f.fabric_price_per_meter) || 0) * meters;
+                    }
+                }
             }
+            this.fabricCost = fc;
             this.accessoriesCost = this.accessories.reduce((s, a) => s + ((a.price||0) * (a.qty||1)), 0);
             this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;
         },

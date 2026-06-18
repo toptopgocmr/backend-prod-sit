@@ -13,14 +13,22 @@ class Quote extends Model
 
     protected $fillable = [
         'reference', 'client_id', 'created_by',
+        // Legacy (devis à vêtement unique – conservé pour compatibilité)
         'gender', 'garment_type', 'model_name', 'model_description', 'model_photo',
-        'fabric_product_id', 'fabric_name', 'fabric_price_per_meter', 'fabric_meters', 'fabric_color',
-        'fabric_cost', 'labor_cost', 'accessories_cost', 'accessories', 'total',
+        'fabric_product_id', 'fabric_name', 'fabric_price_per_meter',
+        'fabric_meters', 'fabric_color',
+        'fabric_cost',
+        // Multi-vêtements / multi-tissus (nouveaux devis)
+        'garments',
+        // Coûts communs
+        'labor_cost', 'accessories_cost', 'accessories', 'total',
+        // Statut & dates
         'status', 'valid_until', 'delivery_date', 'notes', 'custom_order_id',
     ];
 
     protected $casts = [
         'accessories'  => 'array',
+        'garments'     => 'array',
         'valid_until'  => 'date',
         'delivery_date'=> 'date',
     ];
@@ -43,6 +51,8 @@ class Quote extends Model
         });
     }
 
+    // ── Helpers statut ──────────────────────────────────────────────────────
+
     public function getStatusInfo(): array
     {
         return self::STATUSES[$this->status] ?? ['label' => $this->status, 'color' => 'gray'];
@@ -55,6 +65,18 @@ class Quote extends Model
     {
         return $this->valid_until && $this->valid_until->isPast() && $this->status === 'envoye';
     }
+
+    // ── Accesseur : nombre de vêtements ────────────────────────────────────
+
+    public function getGarmentCountAttribute(): int
+    {
+        if ($this->garments) {
+            return count($this->garments);
+        }
+        return 1; // devis legacy = 1 vêtement
+    }
+
+    // ── Relations ───────────────────────────────────────────────────────────
 
     public function client()      { return $this->belongsTo(Client::class); }
     public function creator()     { return $this->belongsTo(User::class, 'created_by'); }
