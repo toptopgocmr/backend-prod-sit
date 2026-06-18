@@ -20,6 +20,10 @@
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 PDF
             </a>
+            <a href="{{ route('quotes.index') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Devis
+            </a>
             <a href="{{ route('orders.create') }}"
                class="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-600 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle vente
@@ -73,8 +77,8 @@
                                 </a>
                             </td>
                             <td class="px-5 py-3.5">
-                                <p class="text-sm font-semibold text-dark">{{ $order->client->full_name }}</p>
-                                <p class="text-xs text-gray-400">{{ $order->client->phone }}</p>
+                                <p class="text-sm font-semibold text-dark">{{ $order->client?->full_name ?? "Client supprimé" }}</p>
+                                <p class="text-xs text-gray-400">{{ $order->client?->phone ?? "-" }}</p>
                             </td>
                             <td class="px-5 py-3.5 text-xs text-gray-500">
                                 {{ match($order->type) { 'tissu'=>'Tissu','pret_a_porter'=>'Prêt-à-porter',default=>'Mixte' } }}
