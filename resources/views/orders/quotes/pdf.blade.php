@@ -140,11 +140,11 @@
             @if($quote->fabric_cost > 0)
             <tr>
                 <td>
-                    Tissu{{ $quote->fabric ? ' — ' . $quote->fabric->name : '' }}
+                    Tissu{{ $quote->fabric ? ' — ' . $quote->fabric->name : ($quote->fabric_name ? ' — ' . $quote->fabric_name : '') }}
                     @if($quote->fabric_color) ({{ $quote->fabric_color }}) @endif
                 </td>
                 <td style="text-align:right">{{ $quote->fabric_meters ?? '—' }} m</td>
-                <td style="text-align:right">{{ $quote->fabric ? number_format($quote->fabric->price_per_meter, 0, ',', ' ') . ' FCFA/m' : '—' }}</td>
+                <td style="text-align:right">{{ number_format($quote->fabric ? $quote->fabric->price_per_meter : ($quote->fabric_price_per_meter ?? 0), 0, ',', ' ') }} FCFA/m</td>
                 <td style="text-align:right; font-weight:600">{{ number_format($quote->fabric_cost, 0, ',', ' ') }} FCFA</td>
             </tr>
             @endif

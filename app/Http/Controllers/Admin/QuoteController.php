@@ -63,6 +63,8 @@ class QuoteController extends Controller
             'model_description' => 'nullable|string',
             'model_photo'       => 'nullable|image|max:2048',
             'fabric_product_id' => 'nullable|exists:products,id',
+            'fabric_name'        => 'nullable|string|max:255',
+            'fabric_price_per_meter' => 'nullable|numeric|min:0',
             'fabric_meters'     => 'nullable|numeric|min:0',
             'fabric_color'      => 'nullable|string',
             'accessories'       => 'nullable|array',
@@ -75,8 +77,15 @@ class QuoteController extends Controller
         DB::transaction(function () use ($validated, $request) {
             $fabricCost = 0;
             if (!empty($validated['fabric_product_id']) && !empty($validated['fabric_meters'])) {
+                // Tissu en stock : prix tiré du produit, on ignore les champs libres
                 $fabric = Product::find($validated['fabric_product_id']);
                 $fabricCost = $fabric->price_per_meter * $validated['fabric_meters'];
+                $validated['fabric_name'] = null;
+                $validated['fabric_price_per_meter'] = null;
+            } elseif (!empty($validated['fabric_name']) && !empty($validated['fabric_meters']) && !empty($validated['fabric_price_per_meter'])) {
+                // Tissu hors stock : nom et prix au mètre saisis librement
+                $fabricCost = $validated['fabric_price_per_meter'] * $validated['fabric_meters'];
+                $validated['fabric_product_id'] = null;
             }
 
             $accessoriesCost = 0;

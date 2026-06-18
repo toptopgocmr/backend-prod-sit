@@ -14,7 +14,7 @@ class Quote extends Model
     protected $fillable = [
         'reference', 'client_id', 'created_by',
         'gender', 'garment_type', 'model_name', 'model_description', 'model_photo',
-        'fabric_product_id', 'fabric_meters', 'fabric_color',
+        'fabric_product_id', 'fabric_name', 'fabric_price_per_meter', 'fabric_meters', 'fabric_color',
         'fabric_cost', 'labor_cost', 'accessories_cost', 'accessories', 'total',
         'status', 'valid_until', 'delivery_date', 'notes', 'custom_order_id',
     ];

@@ -144,10 +144,25 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
 
             {{-- Tissu --}}
             <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-                <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
-                    <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Tissu (optionnel)
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Tissu (optionnel)
+                    </h3>
+                    <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
+                        <button type="button" x-on:click="fabricMode = 'stock'; fabricName = ''; fabricPricePerMeter = 0; calcTotals()"
+                                class="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+                                :class="fabricMode === 'stock' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                            En stock
+                        </button>
+                        <button type="button" x-on:click="fabricMode = 'custom'; fabricId = ''; calcTotals()"
+                                class="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+                                :class="fabricMode === 'custom' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                            Hors stock
+                        </button>
+                    </div>
+                </div>
+
+                <div x-show="fabricMode === 'stock'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tissu en stock</label>
                         <div x-data="searchSelect({ items: [{id:'',name:'— Aucun —',sub:''}].concat(FABRICS.map(f=>({id:f.id,name:f.name,sub:f.price_per_meter.toLocaleString('fr-FR')+' FCFA/m — '+f.available_meters+'m dispo'}))), labelKey: 'name', subKey: 'sub', placeholder: 'Rechercher un tissu...', inputName: 'fabric_product_id', onSelect: (id) => { fabricId = id; calcTotals(); } })" class="relative">
@@ -177,11 +192,36 @@ const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
-                        <input type="number" name="fabric_meters" x-model.number="fabricMeters" x-on:input="calcTotals"
+                        <input type="number" x-bind:name="fabricMode === 'stock' ? 'fabric_meters' : null" x-model.number="fabricMeters" x-on:input="calcTotals"
                                min="0" step="0.5" placeholder="0.0"
                                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     </div>
                 </div>
+
+                <div x-show="fabricMode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du tissu</label>
+                        <input type="text" x-bind:name="fabricMode === 'custom' ? 'fabric_name' : null" x-model="fabricName"
+                               placeholder="Ex : Bazin riche import..."
+                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Prix / mètre</label>
+                        <div class="flex items-center gap-1">
+                            <input type="number" x-bind:name="fabricMode === 'custom' ? 'fabric_price_per_meter' : null" x-model.number="fabricPricePerMeter" x-on:input="calcTotals"
+                                   min="0" step="100" placeholder="0"
+                                   class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                            <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mètres</label>
+                        <input type="number" x-bind:name="fabricMode === 'custom' ? 'fabric_meters' : null" x-model.number="fabricMeters" x-on:input="calcTotals"
+                               min="0" step="0.5" placeholder="0.0"
+                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Couleur / précision tissu</label>
                     <input type="text" name="fabric_color" value="{{ old('fabric_color') }}"
@@ -348,6 +388,7 @@ function quoteForm() {
     return {
         clientId: '', gender: 'femme', fabricId: '', fabricMeters: 0, laborCost: 0,
         fabricCost: 0, total: 0,
+        fabricMode: 'stock', fabricName: '', fabricPricePerMeter: 0,
         accessories: [], accCounter: 0, accessoriesCost: 0,
 
         get selectedFabric() { return FABRICS.find(f => f.id == this.fabricId) || null; },
@@ -362,8 +403,13 @@ function quoteForm() {
         },
 
         calcTotals() {
-            this.fabricCost = (this.fabricId && this.fabricMeters > 0 && this.selectedFabric)
-                ? this.selectedFabric.price_per_meter * this.fabricMeters : 0;
+            if (this.fabricMode === 'stock') {
+                this.fabricCost = (this.fabricId && this.fabricMeters > 0 && this.selectedFabric)
+                    ? this.selectedFabric.price_per_meter * this.fabricMeters : 0;
+            } else {
+                this.fabricCost = (this.fabricMeters > 0 && this.fabricPricePerMeter > 0)
+                    ? this.fabricPricePerMeter * this.fabricMeters : 0;
+            }
             this.accessoriesCost = this.accessories.reduce((s, a) => s + ((a.price||0) * (a.qty||1)), 0);
             this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;
         },

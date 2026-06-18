@@ -1,0 +1,104 @@
+warning: in the working copy of 'resources/views/orders/quotes/create.blade.php', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/resources/views/orders/quotes/create.blade.php b/resources/views/orders/quotes/create.blade.php[m
+[1mindex 061e13d..8854340 100644[m
+[1m--- a/resources/views/orders/quotes/create.blade.php[m
+[1m+++ b/resources/views/orders/quotes/create.blade.php[m
+[36m@@ -190,6 +190,61 @@[m [mconst CURRENCY = '{{ env("CURRENCY", "FCFA") }}';[m
+                 </div>[m
+             </div>[m
+ [m
+[32m+[m[32m            {{-- Accessoires --}}[m
+[32m+[m[32m            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">[m
+[32m+[m[32m                <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">[m
+[32m+[m[32m                    <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">[m
+[32m+[m[32m                        <i data-lucide="puzzle" class="w-4 h-4 text-blue-600"></i>[m
+[32m+[m[32m                        Accessoires[m
+[32m+[m[32m                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold"[m
+[32m+[m[32m                              x-text="accessories.length"></span>[m
+[32m+[m[32m                    </h3>[m
+[32m+[m[32m                    <button type="button" x-on:click="addAccessory"[m
+[32m+[m[32m                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors">[m
+[32m+[m[32m                        <i data-lucide="plus" style="width:13px;height:13px"></i>[m
+[32m+[m[32m                        Ajouter[m
+[32m+[m[32m                    </button>[m
+[32m+[m[32m                </div>[m
+[32m+[m
+[32m+[m[32m                <div x-show="accessories.length === 0" class="px-5 py-6 text-center text-gray-400 text-xs">[m
+[32m+[m[32m                    Boutons, fermetures, broderies, etc. — Ajoutez les accessoires inclus dans le devis.[m
+[32m+[m[32m                </div>[m
+[32m+[m
+[32m+[m[32m                <div class="divide-y divide-gray-50">[m
+[32m+[m[32m                    <template x-for="(acc, index) in accessories" :key="acc.id">[m
+[32m+[m[32m                        <div class="px-5 py-3 flex items-center gap-3">[m
+[32m+[m[32m                            <div class="flex-1">[m
+[32m+[m[32m                                <input type="text" :name="`accessories[${index}][name]`"[m
+[32m+[m[32m                                       x-model="acc.name" placeholder="Nom de l'accessoire"[m
+[32m+[m[32m                                       class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500">[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                            <div class="w-20">[m
+[32m+[m[32m                                <input type="number" :name="`accessories[${index}][qty]`"[m
+[32m+[m[32m                                       x-model.number="acc.qty" x-on:input="calcTotals"[m
+[32m+[m[32m                                       min="1" placeholder="Qté"[m
+[32m+[m[32m                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                            <div class="w-28">[m
+[32m+[m[32m                                <input type="number" :name="`accessories[${index}][price]`"[m
+[32m+[m[32m                                       x-model.number="acc.price" x-on:input="calcTotals"[m
+[32m+[m[32m                                       min="0" step="100" placeholder="Prix"[m
+[32m+[m[32m                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                            <button type="button" x-on:click="removeAccessory(index)"[m
+[32m+[m[32m                                    class="w-6 h-6 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors">[m
+[32m+[m[32m                                <i data-lucide="x" style="width:13px;height:13px"></i>[m
+[32m+[m[32m                            </button>[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                    </template>[m
+[32m+[m[32m                </div>[m
+[32m+[m
+[32m+[m[32m                <div x-show="accessories.length > 0" class="px-5 py-3 border-t border-gray-50 flex justify-end">[m
+[32m+[m[32m                    <span class="text-xs text-gray-500">Total accessoires :[m
+[32m+[m[32m                        <strong class="text-dark" x-text="fmt(accessoriesCost)"></strong>[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+             {{-- Validité & livraison --}}[m
+             <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">[m
+                 <h3 class="text-sm font-display font-semibold text-dark flex items-center gap-2">[m
+[36m@@ -232,6 +287,10 @@[m [mconst CURRENCY = '{{ env("CURRENCY", "FCFA") }}';[m
+                             <span>Tissu</span>[m
+                             <span class="font-semibold text-dark" x-text="fmt(fabricCost)"></span>[m
+                         </div>[m
+[32m+[m[32m                        <div class="flex justify-between text-sm text-gray-500">[m
+[32m+[m[32m                            <span>Accessoires</span>[m
+[32m+[m[32m                            <span class="font-semibold text-dark" x-text="fmt(accessoriesCost)"></span>[m
+[32m+[m[32m                        </div>[m
+                         <div class="flex justify-between items-center text-sm text-gray-500">[m
+                             <span>Main d'œuvre <span class="text-red-400">*</span></span>[m
+                             <div class="flex items-center gap-1">[m
+[36m@@ -289,13 +348,24 @@[m [mfunction quoteForm() {[m
+     return {[m
+         clientId: '', gender: 'femme', fabricId: '', fabricMeters: 0, laborCost: 0,[m
+         fabricCost: 0, total: 0,[m
+[32m+[m[32m        accessories: [], accCounter: 0, accessoriesCost: 0,[m
+ [m
+         get selectedFabric() { return FABRICS.find(f => f.id == this.fabricId) || null; },[m
+ [m
+[32m+[m[32m        addAccessory() {[m
+[32m+[m[32m            this.accessories.push({ id: ++this.accCounter, name: '', qty: 1, price: 0 });[m
+[32m+[m[32m            this.$nextTick(() => lucide.createIcons());[m
+[32m+[m[32m        },[m
+[32m+[m[32m        removeAccessory(index) {[m
+[32m+[m[32m            this.accessories.splice(index, 1);[m
+[32m+[m[32m            this.calcTotals();[m
+[32m+[m[32m        },[m
+[32m+[m
+         calcTotals() {[m
+             this.fabricCost = (this.fabricId && this.fabricMeters > 0 && this.selectedFabric)[m
+                 ? this.selectedFabric.price_per_meter * this.fabricMeters : 0;[m
+[31m-            this.total = this.fabricCost + (this.laborCost || 0);[m
+[32m+[m[32m            this.accessoriesCost = this.accessories.reduce((s, a) => s + ((a.price||0) * (a.qty||1)), 0);[m
+[32m+[m[32m            this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;[m
+         },[m
+ [m
+         fmt(v) { return new Intl.NumberFormat('fr-FR').format(Math.round(v || 0)) + ' ' + CURRENCY; },[m
