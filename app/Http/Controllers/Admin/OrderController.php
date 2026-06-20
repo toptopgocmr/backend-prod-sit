@@ -146,7 +146,13 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['client','cashier','items.product','payments','delivery']);
+        $order->load([
+            'client'    => fn($q) => $q->withTrashed(),
+            'cashier'   => fn($q) => $q->withTrashed(),
+            'items.product' => fn($q) => $q->withTrashed(),
+            'payments',
+            'delivery',
+        ]);
         return view('orders.show', compact('order'));
     }
 
@@ -186,7 +192,11 @@ class OrderController extends Controller
 
     public function invoice(Order $order)
     {
-        $order->load(['client','items.product','cashier']);
+        $order->load([
+            'client'        => fn($q) => $q->withTrashed(),
+            'cashier'       => fn($q) => $q->withTrashed(),
+            'items.product' => fn($q) => $q->withTrashed(),
+        ]);
         return view('orders.invoice', compact('order'));
     }
 

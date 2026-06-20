@@ -601,11 +601,11 @@
 
             <div class="party-card">
                 <div class="party-label">Client</div>
-                <div class="party-name">{{ $order->client->full_name }}</div>
+                <div class="party-name">{{ $order->client?->full_name ?? 'Client supprimé' }}</div>
                 <div class="party-info">
-                    @if($order->client->phone){{ $order->client->phone }}<br>@endif
-                    @if($order->client->email){{ $order->client->email }}<br>@endif
-                    @if($order->client->city){{ $order->client->city }}@endif
+                    @if($order->client?->phone){{ $order->client->phone }}<br>@endif
+                    @if($order->client?->email){{ $order->client->email }}<br>@endif
+                    @if($order->client?->city){{ $order->client->city }}@endif
                 </div>
             </div>
         </div>

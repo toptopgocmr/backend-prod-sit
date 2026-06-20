@@ -344,6 +344,7 @@ $balance = $order->total - $order->amount_paid;
                 <div class="p-5 space-y-3">
                     <div>
                         <p class="text-xs text-gray-400 mb-1">Client</p>
+                        @if($order->client)
                         <a href="{{ route('clients.index') }}" class="flex items-center gap-2 group">
                             <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                                 {{ strtoupper(substr($order->client->first_name, 0, 1)) }}
@@ -353,6 +354,9 @@ $balance = $order->total - $order->amount_paid;
                                 <p class="text-xs text-gray-400">{{ $order->client->phone }}</p>
                             </div>
                         </a>
+                        @else
+                            <p class="text-sm text-gray-400">Client supprimé</p>
+                        @endif
                     </div>
 
                     <div class="border-t border-gray-50 pt-3">
