@@ -41,14 +41,17 @@ class DashboardController extends Controller
             ->get();
 
         // ─── Commandes sur mesure en cours ────────────────────────
-        $activeCustomOrders = CustomOrder::with(['client','couturier'])
+        $activeCustomOrders = CustomOrder::with([
+                'client'    => fn($q) => $q->withTrashed(),
+                'couturier' => fn($q) => $q->withTrashed(),
+            ])
             ->whereNotIn('status', ['livre','annule'])
             ->orderBy('delivery_date')
             ->limit(10)
             ->get();
 
         // ─── Dernières ventes ─────────────────────────────────────
-        $recentOrders = Order::with('client')
+        $recentOrders = Order::with(['client' => fn($q) => $q->withTrashed()])
             ->latest()
             ->limit(8)
             ->get();

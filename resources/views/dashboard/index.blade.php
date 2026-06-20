@@ -128,7 +128,7 @@
                             <i data-lucide="scissors" class="w-4 h-4 text-purple-600"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-dark">{{ $order->client->full_name }}</p>
+                            <p class="text-sm font-semibold text-dark">{{ $order->client?->full_name ?? 'Client supprimé' }}</p>
                             <p class="text-xs text-gray-400">{{ $order->reference }} · {{ ucfirst($order->garment_type) }}</p>
                         </div>
                         <div class="text-right shrink-0">
@@ -211,7 +211,7 @@
                                     {{ $order->reference }}
                                 </a>
                             </td>
-                            <td class="px-6 py-3.5 text-sm text-dark font-medium">{{ $order->client->full_name }}</td>
+                            <td class="px-6 py-3.5 text-sm text-dark font-medium">{{ $order->client?->full_name ?? 'Client supprimé' }}</td>
                             <td class="px-6 py-3.5 text-xs text-gray-500">
                                 {{ match($order->type) { 'tissu'=>'Tissu','pret_a_porter'=>'Prêt-à-porter',default=>'Mixte' } }}
                             </td>
