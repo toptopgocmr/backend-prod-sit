@@ -84,11 +84,9 @@ class DeliveryController extends Controller
 
     public function destroy(Delivery $delivery)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $delivery->delete();
-
-        return redirect()
-            ->route('deliveries.index')
-            ->with('success', 'Livraison supprimée.');
+        return redirect()->route('deliveries.index')->with('success', 'Livraison supprimée.');
     }
 
     public function assignDriver(Request $request, Delivery $delivery)

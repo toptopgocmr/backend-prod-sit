@@ -252,6 +252,7 @@ class QuoteController extends Controller
 
     public function destroy(Quote $quote)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $quote->delete();
         return redirect()->route('quotes.index')->with('success', 'Devis supprimé.');
     }

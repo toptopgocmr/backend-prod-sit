@@ -27,5 +27,5 @@ class UserController extends Controller {
         $user->update(['is_active'=>!$user->is_active]);
         return back()->with('success','Compte '.($user->is_active ? 'activé' : 'désactivé').'.');
     }
-    public function destroy(User $user) { $user->delete(); return redirect()->route('users.index'); }
+    public function destroy(User $user) { abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.'); $user->delete(); return redirect()->route('users.index'); }
 }

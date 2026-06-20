@@ -50,6 +50,7 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         if ($category->products()->count() > 0) {
             return back()->with('error', 'Impossible — cette catégorie contient ' . $category->products()->count() . ' produit(s).');
         }

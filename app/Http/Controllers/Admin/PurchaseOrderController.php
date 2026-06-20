@@ -79,8 +79,9 @@ class PurchaseOrderController extends Controller
 
     public function destroy(PurchaseOrder $purchaseOrder)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $purchaseOrder->delete();
-        return redirect()->route('purchase-orders.index');
+        return redirect()->route('purchase-orders.index')->with('success', 'Bon de commande supprimé.');
     }
 
     /**

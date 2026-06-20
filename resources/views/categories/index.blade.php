@@ -125,7 +125,7 @@
                                 <i data-lucide="pencil" class="w-4 h-4 text-gray-400"></i>
                             </button>
                             {{-- Supprimer --}}
-                            @if($cat->products_count === 0)
+                            @if(auth()->user()->isAdmin() && $cat->products_count === 0)
                             <form method="POST" action="{{ route('categories.destroy', $cat) }}"
                                   onsubmit="return confirm('Supprimer {{ addslashes($cat->name) }} ?')">
                                 @csrf @method('DELETE')

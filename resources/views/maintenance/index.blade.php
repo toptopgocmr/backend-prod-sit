@@ -197,6 +197,7 @@ $urgences = $logs->getCollection()->where('type','urgence')->count();
                                     </button>
                                 </form>
                                 @endif
+                                @if(auth()->user()->isAdmin())
                                 <form method="POST" action="{{ route('maintenance.destroy', $log) }}"
                                       onsubmit="return confirm('Supprimer cette intervention ?')">
                                     @csrf @method('DELETE')
@@ -206,6 +207,7 @@ $urgences = $logs->getCollection()->where('type','urgence')->count();
                                         <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

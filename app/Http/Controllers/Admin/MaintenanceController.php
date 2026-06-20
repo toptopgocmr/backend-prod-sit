@@ -24,7 +24,7 @@ class MaintenanceController extends Controller {
     public function show(MaintenanceLog $maintenance) { $maintenance->load(['equipment','reporter']); return view('maintenance.show', compact('maintenance')); }
     public function edit(MaintenanceLog $maintenance) { return view('maintenance.edit', compact('maintenance')); }
     public function update(Request $request, MaintenanceLog $maintenance) { return back(); }
-    public function destroy(MaintenanceLog $maintenance) { $maintenance->delete(); return redirect()->route('maintenance.index'); }
+    public function destroy(MaintenanceLog $maintenance) { abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.'); $maintenance->delete(); return redirect()->route('maintenance.index'); }
     public function resolve(Request $request, MaintenanceLog $maintenance) {
         $maintenance->update(['status'=>'resolu','resolved_at'=>now(),'resolution'=>$request->resolution,'cost'=>$request->cost ?? 0]);
         $maintenance->equipment->update(['status'=>'operationnel','last_maintenance_date'=>now()->toDateString(),'next_maintenance_date'=>now()->addDays($maintenance->equipment->maintenance_interval_days)->toDateString()]);

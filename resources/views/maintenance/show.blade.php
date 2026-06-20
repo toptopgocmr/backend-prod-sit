@@ -64,6 +64,7 @@ $sc = $statusCfg[$maintenance->status] ?? ['—',    'bg-gray-100','text-gray-50
             <i data-lucide="check-circle" style="width:14px;height:14px"></i>Marquer résolu
         </button>
         @endif
+        @if(auth()->user()->isAdmin())
         <form method="POST" action="{{ route('maintenance.destroy', $maintenance) }}"
               onsubmit="return confirm('Supprimer cette intervention ?')">
             @csrf @method('DELETE')
@@ -72,6 +73,7 @@ $sc = $statusCfg[$maintenance->status] ?? ['—',    'bg-gray-100','text-gray-50
                 <i data-lucide="trash-2" style="width:14px;height:14px"></i>
             </button>
         </form>
+        @endif
     </div>
 </div>
 

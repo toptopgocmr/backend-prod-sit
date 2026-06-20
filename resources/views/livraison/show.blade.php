@@ -19,6 +19,7 @@
             <a href="{{ route('deliveries.edit', $delivery) }}" class="btn btn-outline-primary btn-sm">
                 <i class="bi bi-pencil me-1"></i>Modifier
             </a>
+            @if(auth()->user()->isAdmin())
             <form method="POST" action="{{ route('deliveries.destroy', $delivery) }}"
                   onsubmit="return confirm('Supprimer définitivement cette livraison ?')">
                 @csrf @method('DELETE')
@@ -26,6 +27,7 @@
                     <i class="bi bi-trash me-1"></i>Supprimer
                 </button>
             </form>
+            @endif
         </div>
     </div>
 </div>

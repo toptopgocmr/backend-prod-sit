@@ -190,6 +190,7 @@ $statusCfg = [
                        class="action-icon text-gray-400" title="Modifier">
                         <i data-lucide="edit-3" style="width:15px;height:15px"></i>
                     </a>
+                    @if(auth()->user()->isAdmin())
                     <form method="POST" action="{{ route('equipment.destroy', $eq) }}"
                           onsubmit="return confirm('Supprimer cet équipement ?')">
                         @csrf @method('DELETE')
@@ -197,6 +198,7 @@ $statusCfg = [
                             <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                         </button>
                     </form>
+                    @endif
                 </div>
                 <a href="{{ route('maintenance.create', ['equipment_id'=>$eq->id]) }}"
                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-500 hover:text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition-colors">

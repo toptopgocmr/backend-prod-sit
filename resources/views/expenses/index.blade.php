@@ -83,12 +83,14 @@
                                     <a href="{{ route('expenses.edit', $expense) }}" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark">
                                         <i data-lucide="edit-2" style="width:15px;height:15px"></i>
                                     </a>
+                                    @if(auth()->user()->isAdmin())
                                     <form method="POST" action="{{ route('expenses.destroy', $expense) }}" onsubmit="return confirm('Supprimer cette dépense ?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600">
                                             <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

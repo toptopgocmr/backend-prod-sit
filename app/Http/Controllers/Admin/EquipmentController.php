@@ -18,5 +18,5 @@ class EquipmentController extends Controller {
     public function show(Equipment $equipment) { $equipment->load('maintenanceLogs.reporter'); return view('maintenance.equipment-show', compact('equipment')); }
     public function edit(Equipment $equipment) { return view('maintenance.equipment-edit', compact('equipment')); }
     public function update(Request $request, Equipment $equipment) { $equipment->update($request->all()); return back()->with('success','Mis à jour.'); }
-    public function destroy(Equipment $equipment) { $equipment->delete(); return redirect()->route('equipment.index'); }
+    public function destroy(Equipment $equipment) { abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.'); $equipment->delete(); return redirect()->route('equipment.index'); }
 }

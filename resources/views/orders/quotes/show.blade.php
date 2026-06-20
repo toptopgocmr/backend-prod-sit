@@ -151,11 +151,13 @@
                     </form>
                     @endif
 
+                    @if(auth()->user()->isAdmin())
                     <form method="POST" action="{{ route('quotes.destroy', $quote) }}">
                         @csrf @method('DELETE')
                         <button type="submit" class="w-full text-xs text-red-400 hover:text-red-600 py-1 transition-colors"
                                 onclick="return confirm('Supprimer ce devis ?')">Supprimer</button>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>

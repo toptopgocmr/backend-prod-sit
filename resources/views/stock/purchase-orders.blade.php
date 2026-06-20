@@ -112,6 +112,7 @@
                                        class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Modifier">
                                         <i data-lucide="edit-2" style="width:15px;height:15px"></i>
                                     </a>
+                                    @if(auth()->user()->isAdmin())
                                     <form method="POST" action="{{ route('purchase-orders.destroy', $order) }}"
                                           onsubmit="return confirm('Supprimer ce bon de commande ?')">
                                         @csrf @method('DELETE')
@@ -120,6 +121,7 @@
                                             <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 @endif
                             </div>
                         </td>

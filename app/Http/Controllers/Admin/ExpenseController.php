@@ -48,6 +48,6 @@ class ExpenseController extends Controller {
         $expense->update(['is_validated'=>true,'validated_by'=>auth()->id()]);
         return back()->with('success','Dépense validée.');
     }
-    public function destroy(Expense $expense) { $expense->delete(); return redirect()->route('expenses.index'); }
+    public function destroy(Expense $expense) { abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.'); $expense->delete(); return redirect()->route('expenses.index'); }
     public function show(Expense $expense)    { return view('expenses.show', compact('expense')); }
 }

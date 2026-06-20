@@ -112,6 +112,7 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Produit supprimé.');
     }

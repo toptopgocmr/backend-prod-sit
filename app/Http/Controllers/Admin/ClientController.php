@@ -163,6 +163,7 @@ class ClientController extends Controller
 
     public function destroy(Client $client)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Accès réservé à l\'administrateur.');
         $client->delete();
         return redirect()->route('clients.index')->with('success', 'Client supprimé.');
     }

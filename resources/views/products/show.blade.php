@@ -178,6 +178,7 @@ $sizes    = $product->size  ? array_map('trim', explode(',', $product->size))  :
                           text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                     <i data-lucide="edit-2" style="width:15px;height:15px"></i> Modifier
                 </a>
+                @if(auth()->user()->isAdmin())
                 <form method="POST" action="{{ route('products.destroy', $product) }}"
                       onsubmit="return confirm('Supprimer ce produit ?')">
                     @csrf @method('DELETE')
@@ -187,6 +188,7 @@ $sizes    = $product->size  ? array_map('trim', explode(',', $product->size))  :
                         <i data-lucide="trash-2" style="width:15px;height:15px"></i> Supprimer
                     </button>
                 </form>
+                @endif
             </div>
 
         </div>

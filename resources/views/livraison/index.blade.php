@@ -295,6 +295,7 @@
                                 </button>
 
                                 {{-- Supprimer --}}
+                                @if(auth()->user()->isAdmin())
                                 <form method="POST" action="{{ route('deliveries.destroy', $delivery) }}"
                                       x-data
                                       @submit.prevent="if(confirm('Supprimer cette livraison ?')) $el.submit()">
@@ -303,6 +304,7 @@
                                         <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

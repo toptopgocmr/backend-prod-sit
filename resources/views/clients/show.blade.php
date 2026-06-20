@@ -192,6 +192,7 @@ $genderLabel = match($client->gender) { 'homme' => 'Homme', 'femme' => 'Femme', 
                     <i data-lucide="edit-2" style="width:15px;height:15px"></i>
                     Modifier le client
                 </a>
+                @if(auth()->user()->isAdmin())
                 <form method="POST" action="{{ route('clients.destroy', $client) }}"
                       onsubmit="return confirm('Supprimer ce client et toutes ses données ?')">
                     @csrf @method('DELETE')
@@ -202,6 +203,7 @@ $genderLabel = match($client->gender) { 'homme' => 'Homme', 'femme' => 'Femme', 
                         Supprimer
                     </button>
                 </form>
+                @endif
             </div>
 
         </div>
