@@ -412,9 +412,9 @@ $balance = $order->total - $order->amount_paid;
                     <i data-lucide="arrow-left" style="width:15px;height:15px"></i>
                     Retour aux ventes
                 </a>
-                @if(!in_array($order->status, ['delivered','cancelled']))
+                @if(auth()->user()->isAdmin() && !in_array($order->status, ['delivered','cancelled']))
                 <form method="POST" action="{{ route('orders.destroy', $order) }}"
-                      x-data onsubmit="return confirm('Supprimer cette commande ?')">
+                      x-data onsubmit="return confirm('Supprimer cette commande ? Cette action est irréversible.')">
                     @csrf @method('DELETE')
                     <button type="submit"
                             class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-100 bg-red-50 text-sm font-semibold text-red-600 hover:bg-red-100 transition-colors">

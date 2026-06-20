@@ -245,9 +245,19 @@ class OrderController extends Controller
 
     public function destroy(Order $order)
     {
-        if (in_array($order->status, ['delivered'])) {
+        // Seul l'administrateur peut supprimer une commande
+        if (!auth()->user()->isAdmin()) {
+            return back()->with('error', 'Accès refusé. Seul l\'administrateur peut supprimer une commande.');
+        }
+
+        if ($order->status === 'delivered') {
             return back()->with('error', 'Impossible de supprimer une commande livrée.');
         }
+
+        if (in_array($order->payment_status, ['partial', 'paid']) && !auth()->user()->isAdmin()) {
+            return back()->with('error', 'Impossible de supprimer une commande avec paiement enregistré.');
+        }
+
         $order->delete();
         return redirect()->route('orders.index')->with('success', 'Commande supprimée.');
     }
