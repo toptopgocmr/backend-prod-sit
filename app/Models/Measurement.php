@@ -49,37 +49,51 @@ class Measurement extends Model
     public function toFormattedArray(): array
     {
         $labels = [
-            // Femme - haut
-            'f_longueur_epaule'      => 'Longueur épaule',
-            'f_tour_poitrine'        => 'Tour de poitrine',
-            'f_tour_taille'          => 'Tour de taille',
+            // Femme - haut / corsage
+            'f_tour_poitrine'        => 'Poitrine',
+            'f_tour_taille'          => 'Taille',
+            'f_bustre'               => 'Bustre',
+            'f_longueur_dos'         => 'Long. dos',
+            'f_longueur_epaule'      => 'Épaule',
+            'f_carrure_devant'       => 'Carrure devant',
+            'f_decollte_devant'      => 'Décolleté devant',
+            'f_pinces'               => 'Pinces',
+            'f_emmanchure'           => 'Emmanchure',
+            'f_tour_encolure'        => 'Tour encolure',
+            'f_tour_manche'          => 'Tour de manche',
+            // Femme - manches
+            'f_manche_longue'        => 'Manche longue',
+            'f_manche_courte'        => 'Manche courte',
+            'f_manche_trois_quarts'  => 'Manche 3/4',
+            // Femme - bas
+            'f_tour_ceinture'        => 'Ceinture',
+            'f_grandes_hanches'      => 'Hanche',
             'f_petites_hanches'      => 'Tour petites hanches',
-            'f_grandes_hanches'      => 'Tour grandes hanches',
+            'f_fessier'              => 'Fessier',
+            'f_tour_cuisse'          => 'Cuisse',
+            'f_enfourchure'          => 'Enfourchure',
+            'f_entrejambe'           => 'Entrejambe',
+            // Femme - longueurs
+            'f_robe_longue'          => 'Long. robe',
+            'f_longueur_genoux'      => 'Long. genoux',
+            'f_longueur_cheville'    => 'Long. cheville',
+            'f_longueur_pantalon'    => 'Long. pantalon',
+            'f_longueur_veste'       => 'Long. veste',
+            // Femme - legacy / autres
             'f_hauteur_saillant'     => 'Hauteur saillant',
             'f_ecart_saillants'      => 'Écart des saillants',
             'f_hauteur_buste_devant' => 'Hauteur buste devant',
             'f_hauteur_buste_dos'    => 'Hauteur buste dos',
             'f_longueur_cote_buste'  => 'Longueur côté buste',
-            'f_tour_manche'          => 'Tour de manche',
             'f_longueur_manche'      => 'Longueur de manche',
-            'f_carrure_devant'       => 'Carrure devant',
             'f_carrure_dos'          => 'Carrure dos',
-            'f_longueur_veste'       => 'Longueur veste',
-            'f_tour_encolure'        => 'Tour encolure',
-            'f_hauteur_fessier'      => 'Hauteur fessier',
-            // Femme - bas
-            'f_tour_ceinture'        => 'Tour de ceinture',
             'f_tour_bassin'          => 'Tour de bassin',
             'f_hauteur_bassin'       => 'Hauteur bassin',
             'f_longueur_assise'      => "Longueur d'assise",
             'f_fourche_devant'       => 'Fourche devant',
             'f_fourche_dos'          => 'Fourche dos',
-            'f_entrejambe'           => 'Entrejambe',
-            'f_longueur_pantalon'    => 'Longueur pantalon',
-            'f_tour_cuisse'          => 'Tour de cuisse',
             'f_largeur_bas'          => 'Largeur du bas',
-            // Femme - robes
-            'f_robe_longue'          => 'Robe longue',
+            'f_hauteur_fessier'      => 'Hauteur fessier',
             'f_robe_avant_genoux'    => 'Robe avant genoux',
             'f_robe_apres_genoux'    => 'Robe après genoux',
             'f_robe_trois_quarts'    => 'Robe trois quarts',
@@ -123,21 +137,4 @@ class Measurement extends Model
             'poitrine'               => 'Poitrine',
             'taille'                 => 'Taille',
             'hanches'                => 'Hanches',
-            'longueur_pantalon'      => 'Longueur pantalon',
-            'longueur_manche'        => 'Longueur manche',
-            'longueur_robe'          => 'Longueur robe',
-            'cou'                    => 'Cou',
-            'epaules'                => 'Épaules',
-            'entrejambe'             => 'Entrejambe',
-            'bras'                   => 'Bras',
-        ];
-
-        $result = [];
-        foreach ($this->getAllValues() as $key => $val) {
-            if ($val === null || $val === '') continue;
-            $label = $labels[$key] ?? ucfirst(str_replace('_', ' ', $key));
-            $result[$label] = "{$val} cm";
-        }
-        return $result;
-    }
-}
+        
