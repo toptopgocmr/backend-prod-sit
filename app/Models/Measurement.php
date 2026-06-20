@@ -137,4 +137,21 @@ class Measurement extends Model
             'poitrine'               => 'Poitrine',
             'taille'                 => 'Taille',
             'hanches'                => 'Hanches',
-        
+            'longueur_pantalon'      => 'Longueur pantalon',
+            'longueur_manche'        => 'Longueur manche',
+            'longueur_robe'          => 'Longueur robe',
+            'cou'                    => 'Cou',
+            'epaules'                => 'Épaules',
+            'entrejambe'             => 'Entrejambe',
+            'bras'                   => 'Bras',
+        ];
+
+        $result = [];
+        foreach ($this->getAllValues() as $key => $val) {
+            if ($val === null || $val === '') continue;
+            $label = $labels[$key] ?? ucfirst(str_replace('_', ' ', $key));
+            $result[$label] = "{$val} cm";
+        }
+        return $result;
+    }
+}

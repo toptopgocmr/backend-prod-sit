@@ -557,7 +557,7 @@
                     @if($order->delivered_at)
                         Livrée le : {{ $order->delivered_at->format('d/m/Y') }}<br>
                     @endif
-                    Caissier : {{ $order->cashier->name }}<br>
+                    Caissier : {{ $order->cashier?->name ?? '—' }}<br>
                     Agence : {{ env('AGENCE_NOM', 'Agence Plateau') }}
                 </div>
                 <div style="margin-top:10px;">

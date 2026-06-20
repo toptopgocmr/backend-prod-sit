@@ -358,8 +358,12 @@ $balance = $order->total - $order->amount_paid;
                     <div class="border-t border-gray-50 pt-3">
                         <p class="text-xs text-gray-400 mb-1">Caissier</p>
                         <div class="flex items-center gap-2">
-                            <img src="{{ $order->cashier->avatar_url }}" class="w-6 h-6 rounded-full">
-                            <p class="text-sm font-semibold text-dark">{{ $order->cashier->name }}</p>
+                            @if($order->cashier)
+                                <img src="{{ $order->cashier->avatar_url }}" class="w-6 h-6 rounded-full">
+                                <p class="text-sm font-semibold text-dark">{{ $order->cashier->name }}</p>
+                            @else
+                                <p class="text-sm text-gray-400">—</p>
+                            @endif
                         </div>
                     </div>
 
