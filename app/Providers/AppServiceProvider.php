@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Pagination\Paginator;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -18,8 +17,5 @@ class AppServiceProvider extends ServiceProvider
 
         // Carbon en français
         Carbon::setLocale('fr');
-
-        // Utiliser la pagination Tailwind (compatible avec le design GSIT)
-        Paginator::useTailwind();
     }
 }
