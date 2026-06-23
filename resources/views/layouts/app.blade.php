@@ -69,38 +69,74 @@
         {{-- Nav --}}
         <nav class="flex-1 py-4 px-2 space-y-0.5 scrollbar-thin overflow-y-auto">
             @php
-            $navGroups = [
-                'Principal' => [
-                    ['route'=>'dashboard',          'icon'=>'layout-dashboard','label'=>'Tableau de bord'],
-                ],
-                'Ventes' => [
-                    ['route'=>'orders.index',       'icon'=>'shopping-bag',   'label'=>'Ventes'],
-                    ['route'=>'custom-orders.index','icon'=>'scissors',        'label'=>'Sur mesure'],
-                    ['route'=>'clients.index',      'icon'=>'users',           'label'=>'Clients'],
-                ],
-                'Stock' => [
-                    ['route'=>'products.index',     'icon'=>'package',         'label'=>'Produits'],
-                    ['route'=>'categories.index',   'icon'=>'tag',             'label'=>'Catégories'],
-                    ['route'=>'stock.index',        'icon'=>'layers',          'label'=>'Stock'],
-                    ['route'=>'purchase-orders.index','icon'=>'truck',         'label'=>'Achats'],
-                ],
-                'Finance' => [
-                    ['route'=>'finance.index',      'icon'=>'bar-chart-2',    'label'=>'Finance'],
-                    ['route'=>'expenses.index',     'icon'=>'receipt',         'label'=>'Dépenses'],
-                    ['route'=>'salaries.index',     'icon'=>'wallet',          'label'=>'Salaires'],
-                ],
-                'Opérations' => [
-                    ['route'=>'atelier.index',      'icon'=>'shirt',           'label'=>'Atelier'],
-                    ['route'=>'deliveries.index',   'icon'=>'map-pin',         'label'=>'Livraisons'],
-                ],
-                'Maintenance' => [
-                    ['route'=>'equipment.index',    'icon'=>'tool',            'label'=>'Équipements'],
-                    ['route'=>'maintenance.index',  'icon'=>'wrench',          'label'=>'Interventions'],
-                ],
-                'Rapports' => [
-                    ['route'=>'reports.index',      'icon'=>'file-bar-chart',  'label'=>'Rapports'],
-                ],
+            $u = auth()->user();
+
+            // ── Définition des menus par rôle ──────────────────────────────
+            $navGroups = [];
+
+            // Tableau de bord : tout le monde
+            $navGroups['Principal'] = [
+                ['route'=>'dashboard', 'icon'=>'layout-dashboard', 'label'=>'Tableau de bord'],
             ];
+
+            // Ventes : admin + cashier
+            if ($u->isAdmin() || $u->isCashier()) {
+                $navGroups['Ventes'] = [
+                    ['route'=>'orders.index',       'icon'=>'shopping-bag', 'label'=>'Ventes'],
+                    ['route'=>'custom-orders.index','icon'=>'scissors',      'label'=>'Sur mesure'],
+                    ['route'=>'clients.index',      'icon'=>'users',         'label'=>'Clients'],
+                ];
+            }
+            // Sur mesure seul : couturier
+            if ($u->isCouturier()) {
+                $navGroups['Commandes'] = [
+                    ['route'=>'custom-orders.index','icon'=>'scissors','label'=>'Sur mesure'],
+                ];
+            }
+
+            // Stock : admin + stock_manager
+            if ($u->isAdmin() || $u->isStockManager()) {
+                $navGroups['Stock'] = [
+                    ['route'=>'products.index',       'icon'=>'package','label'=>'Produits'],
+                    ['route'=>'categories.index',     'icon'=>'tag',    'label'=>'Catégories'],
+                    ['route'=>'stock.index',          'icon'=>'layers', 'label'=>'Stock'],
+                    ['route'=>'purchase-orders.index','icon'=>'truck',  'label'=>'Achats'],
+                ];
+            }
+
+            // Finance : admin + cashier
+            if ($u->isAdmin() || $u->isCashier()) {
+                $navGroups['Finance'] = [
+                    ['route'=>'finance.index',  'icon'=>'bar-chart-2','label'=>'Finance'],
+                    ['route'=>'expenses.index', 'icon'=>'receipt',    'label'=>'Dépenses'],
+                    ['route'=>'salaries.index', 'icon'=>'wallet',     'label'=>'Salaires'],
+                ];
+            }
+
+            // Opérations
+            $opsItems = [];
+            if ($u->isAdmin() || $u->isCouturier()) {
+                $opsItems[] = ['route'=>'atelier.index',    'icon'=>'shirt',    'label'=>'Atelier'];
+            }
+            if ($u->isAdmin() || $u->isDelivery()) {
+                $opsItems[] = ['route'=>'deliveries.index', 'icon'=>'map-pin',  'label'=>'Livraisons'];
+            }
+            if (!empty($opsItems)) $navGroups['Opérations'] = $opsItems;
+
+            // Maintenance : admin seulement
+            if ($u->isAdmin()) {
+                $navGroups['Maintenance'] = [
+                    ['route'=>'equipment.index',  'icon'=>'tool',  'label'=>'Équipements'],
+                    ['route'=>'maintenance.index','icon'=>'wrench','label'=>'Interventions'],
+                ];
+            }
+
+            // Rapports : admin + cashier
+            if ($u->isAdmin() || $u->isCashier()) {
+                $navGroups['Rapports'] = [
+                    ['route'=>'reports.index','icon'=>'file-bar-chart','label'=>'Rapports'],
+                ];
+            }
             @endphp
 
             @foreach($navGroups as $groupName => $items)
@@ -186,32 +222,4 @@
                  class="mx-6 mt-4 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl text-sm">
                 <i data-lucide="check-circle" class="w-4 h-4 text-green-600 shrink-0"></i>
                 {{ session('success') }}
-                <button @click="show=false" class="ml-auto text-green-500"><i data-lucide="x" style="width:14px;height:14px"></i></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div x-data="{show:true}" x-show="show" x-init="setTimeout(()=>show=false,5000)"
-                 class="mx-6 mt-4 flex items-center gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm">
-                <i data-lucide="alert-circle" class="w-4 h-4 text-red-600 shrink-0"></i>
-                {{ session('error') }}
-                <button @click="show=false" class="ml-auto text-red-500"><i data-lucide="x" style="width:14px;height:14px"></i></button>
-            </div>
-        @endif
-
-        <main class="flex-1 overflow-y-auto p-6">
-            @yield('content')
-        </main>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
-        function updateClock() {
-            const el = document.getElementById('clock');
-            if (el) el.textContent = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-        }
-        updateClock();
-        setInterval(updateClock, 30000);
-    </script>
-    @stack('scripts')
-</body>
-</html>
+                <button @click="show=false" class="ml-auto text-green-500"><i data-lucide="x" s

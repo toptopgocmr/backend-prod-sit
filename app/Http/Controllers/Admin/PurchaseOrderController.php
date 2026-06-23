@@ -85,6 +85,19 @@ class PurchaseOrderController extends Controller
     }
 
     /**
+     * Annuler un bon de commande (sans suppression définitive).
+     * Disponible pour admin et stock_manager.
+     */
+    public function cancel(PurchaseOrder $purchaseOrder)
+    {
+        if ($purchaseOrder->status === 'received') {
+            return back()->with('error', 'Impossible d\'annuler un bon de commande déjà réceptionné.');
+        }
+        $purchaseOrder->update(['status' => 'cancelled']);
+        return back()->with('success', 'Bon de commande annulé.');
+    }
+
+    /**
      * Réceptionner les articles ET enregistrer automatiquement une dépense finance.
      */
     public function receive(Request $request, PurchaseOrder $purchaseOrder)
@@ -141,18 +154,4 @@ class PurchaseOrderController extends Controller
                 // Lier la dépense au bon de commande
                 $purchaseOrder->update([
                     'status'         => 'received',
-                    'received_date'  => now()->toDateString(),
-                    'expense_id'     => $expense->id,
-                    'payment_method' => $paymentMethod,
-                ]);
-            } else {
-                $purchaseOrder->update([
-                    'status'        => 'received',
-                    'received_date' => now()->toDateString(),
-                ]);
-            }
-        });
-
-        return back()->with('success', 'Réception enregistrée et dépense comptabilisée en finance.');
-    }
-}
+                    'received_da

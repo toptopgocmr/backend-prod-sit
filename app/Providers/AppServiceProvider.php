@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Pagination\Paginator;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,6 +17,4 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         // Carbon en français
-        Carbon::setLocale('fr');
-    }
-}
+    

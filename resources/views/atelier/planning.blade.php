@@ -75,6 +75,7 @@
                             <th class="px-5 py-3 text-left font-semibold">Couturier</th>
                             <th class="px-5 py-3 text-left font-semibold">Vêtement</th>
                             <th class="px-5 py-3 text-center font-semibold">Statut</th>
+                            <th class="px-5 py-3 text-center font-semibold">Commande le</th>
                             <th class="px-5 py-3 text-right font-semibold">Date livraison</th>
                         </tr>
                     </thead>
@@ -110,6 +111,10 @@
                             <td class="px-5 py-3.5 text-center">
                                 <span class="badge-status {{ $statusConfig['class'] }}">{{ $statusConfig['label'] }}</span>
                             </td>
+                            <td class="px-5 py-3.5 text-center">
+                                <p class="text-xs text-gray-500">{{ $order->created_at->format('d/m/Y') }}</p>
+                                <p class="text-xs text-gray-400">{{ $order->created_at->diffForHumans() }}</p>
+                            </td>
                             <td class="px-5 py-3.5 text-right">
                                 @if($order->delivery_date)
                                     <p class="text-sm font-semibold {{ $isLate ? 'text-red-600' : ($isToday ? 'text-orange-500' : 'text-dark') }}">
@@ -132,15 +137,4 @@
                 </table>
             </div>
         </div>
-    </div>
-    @empty
-    <div class="bg-white rounded-2xl border border-gray-100 px-5 py-16 text-center text-gray-400">
-        <div class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
-            <i data-lucide="calendar" class="w-8 h-8 text-gray-200"></i>
-        </div>
-        <p class="font-medium">Aucune commande en cours</p>
-    </div>
-    @endforelse
-
-</div>
-@endsection
+   

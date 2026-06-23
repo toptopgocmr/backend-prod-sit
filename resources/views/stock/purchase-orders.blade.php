@@ -107,17 +107,26 @@
                                    class="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Voir détail">
                                     <i data-lucide="eye" style="width:15px;height:15px"></i>
                                 </a>
-                                @if($order->status !== 'received')
+                                @if($order->status !== 'received' && $order->status !== 'cancelled')
                                     <a href="{{ route('purchase-orders.edit', $order) }}"
                                        class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Modifier">
                                         <i data-lucide="edit-2" style="width:15px;height:15px"></i>
                                     </a>
+                                    {{-- Annuler commande (admin + stock_manager) --}}
+                                    <form method="POST" action="{{ route('purchase-orders.cancel', $order) }}"
+                                          onsubmit="return confirm('Annuler ce bon de commande après audit / contre-expertise ?')">
+                                        @csrf @method('PUT')
+                                        <button type="submit"
+                                                class="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-600 transition-colors" title="Annuler la commande">
+                                            <i data-lucide="x-circle" style="width:15px;height:15px"></i>
+                                        </button>
+                                    </form>
                                     @if(auth()->user()->isAdmin())
                                     <form method="POST" action="{{ route('purchase-orders.destroy', $order) }}"
-                                          onsubmit="return confirm('Supprimer ce bon de commande ?')">
+                                          onsubmit="return confirm('Supprimer définitivement ce bon de commande ?')">
                                         @csrf @method('DELETE')
                                         <button type="submit"
-                                                class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="Supprimer">
+                                                class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="Supprimer définitivement">
                                             <i data-lucide="trash-2" style="width:15px;height:15px"></i>
                                         </button>
                                     </form>
@@ -125,25 +134,4 @@
                                 @endif
                             </div>
                         </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="px-5 py-16 text-center text-gray-400">
-                            <div class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
-                                <i data-lucide="shopping-cart" class="w-8 h-8 text-gray-200"></i>
-                            </div>
-                            <p class="font-medium">Aucun bon de commande</p>
-                            <p class="text-xs mt-1">Créez votre premier bon de commande fournisseur.</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if($orders->hasPages())
-            <div class="px-5 py-4 border-t border-gray-50">{{ $orders->links() }}</div>
-        @endif
-    </div>
-
-</div>
-@endsection
+                    </
