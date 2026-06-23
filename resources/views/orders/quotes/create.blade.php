@@ -22,13 +22,21 @@ $clientsJson = $clients->map(fn($c) => [
     'name'  => $c->full_name,
     'phone' => $c->phone,
 ])->values();
+
+$accessoryProductsJson = $accessoryProducts->map(fn($a) => [
+    'id'             => $a->id,
+    'name'           => $a->name,
+    'price'          => $a->price ?? 0,
+    'stock_quantity' => $a->stock_quantity ?? 0,
+])->values();
 @endphp
 
 <script>
-const FABRICS  = {!! json_encode($fabricsJson) !!};
-const CLIENTS  = {!! json_encode($clientsJson) !!};
-const CURRENCY = '{{ env("CURRENCY", "FCFA") }}';
-const GARMENT_TYPES = {!! json_encode($garmentTypes) !!};
+const FABRICS             = {!! json_encode($fabricsJson) !!};
+const CLIENTS             = {!! json_encode($clientsJson) !!};
+const ACCESSORY_PRODUCTS  = {!! json_encode($accessoryProductsJson) !!};
+const CURRENCY            = '{{ env("CURRENCY", "FCFA") }}';
+const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
 </script>
 
 <form method="POST" action="{{ route('quotes.store') }}" enctype="multipart/form-data"
@@ -337,7 +345,7 @@ const GARMENT_TYPES = {!! json_encode($garmentTypes) !!};
                         <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold"
                               x-text="accessories.length"></span>
                     </h3>
-                    <button type="button" x-on:click="addAccessory"
+                    <button type="button" x-on:click="addAccessory()"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition-colors">
                         <i data-lucide="plus" style="width:13px;height:13px"></i>
                         Ajouter
@@ -349,29 +357,123 @@ const GARMENT_TYPES = {!! json_encode($garmentTypes) !!};
                 </div>
 
                 <div class="divide-y divide-gray-50">
-                    <template x-for="(acc, index) in accessories" :key="acc.id">
-                        <div class="px-5 py-3 flex items-center gap-3">
-                            <div class="flex-1">
-                                <input type="text" :name="`accessories[${index}][name]`"
-                                       x-model="acc.name" placeholder="Nom de l'accessoire"
-                                       class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500">
+                    <template x-for="(acc, ai) in accessories" :key="acc._id">
+                        <div class="p-4 space-y-3">
+
+                            {{-- Toggle En stock / Nouveau --}}
+                            <div class="flex items-center justify-between">
+                                <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
+                                    <button type="button"
+                                            x-on:click="acc.mode = 'stock'; calcTotals()"
+                                            class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                            :class="acc.mode === 'stock' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'">
+                                        En stock
+                                    </button>
+                                    <button type="button"
+                                            x-on:click="acc.mode = 'custom'; calcTotals()"
+                                            class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                            :class="acc.mode === 'custom' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'">
+                                        Nouveau
+                                    </button>
+                                </div>
+                                <button type="button" x-on:click="removeAccessory(ai)"
+                                        class="w-6 h-6 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors">
+                                    <i data-lucide="x" style="width:13px;height:13px"></i>
+                                </button>
                             </div>
-                            <div class="w-20">
-                                <input type="number" :name="`accessories[${index}][qty]`"
-                                       x-model.number="acc.qty" x-on:input="calcTotals"
-                                       min="1" placeholder="Qté"
-                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+
+                            {{-- Mode En stock : sélection depuis catalogue --}}
+                            <div x-show="acc.mode === 'stock'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input type="hidden" :name="`accessories[${ai}][mode]`" value="stock">
+                                <div class="sm:col-span-2"
+                                     x-data="accSelect(acc)"
+                                     x-init="asFiltered = ACCESSORY_PRODUCTS">
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Accessoire en stock</label>
+                                    <input type="hidden" :name="`accessories[${ai}][product_id]`" x-model="acc.product_id">
+                                    <input type="hidden" :name="`accessories[${ai}][name]`"
+                                           :value="acc.product_id ? (ACCESSORY_PRODUCTS.find(p=>p.id==acc.product_id)?.name ?? '') : ''">
+                                    <div class="relative">
+                                        <button type="button" x-on:click="asOpen = !asOpen"
+                                                class="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+                                            <span :class="acc.product_id ? 'text-dark' : 'text-gray-400'" class="truncate text-xs"
+                                                  x-text="acc.product_id ? (ACCESSORY_PRODUCTS.find(p=>p.id==acc.product_id)?.name ?? '— Aucun —') : '— Choisir un accessoire —'"></span>
+                                            <i data-lucide="chevrons-up-down" style="width:13px;height:13px" class="text-gray-400 shrink-0 ml-1"></i>
+                                        </button>
+                                        <div x-show="asOpen" x-on:click.outside="asOpen=false" x-transition
+                                             class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                            <div class="p-2 border-b border-gray-100">
+                                                <input type="text" x-model="asSearch" x-on:input="filterAcc()"
+                                                       placeholder="Filtrer..."
+                                                       class="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none">
+                                            </div>
+                                            <ul class="max-h-40 overflow-y-auto">
+                                                <li x-on:click="selectAcc(null, acc); asOpen=false"
+                                                    class="px-3 py-2 text-xs text-gray-400 hover:bg-gray-50 cursor-pointer">— Aucun —</li>
+                                                <template x-for="p in asFiltered" :key="p.id">
+                                                    <li x-on:click="selectAcc(p, acc); asOpen=false"
+                                                        class="px-3 py-2.5 hover:bg-purple-50 cursor-pointer"
+                                                        :class="acc.product_id == p.id ? 'bg-purple-50' : ''">
+                                                        <p class="text-xs font-semibold text-dark" x-text="p.name"></p>
+                                                        <p class="text-xs text-gray-400"
+                                                           x-text="p.price.toLocaleString('fr-FR') + ' FCFA — ' + p.stock_quantity + ' en stock'"></p>
+                                                    </li>
+                                                </template>
+                                                <li x-show="asFiltered.length === 0" class="px-3 py-4 text-center text-gray-400 text-xs">Aucun résultat</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
+                                    <input type="number" :name="`accessories[${ai}][qty]`"
+                                           x-model.number="acc.qty" x-on:input="calcTotals()"
+                                           min="1" placeholder="1"
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+                                    <input type="hidden" :name="`accessories[${ai}][price]`"
+                                           :value="acc.product_id ? (ACCESSORY_PRODUCTS.find(p=>p.id==acc.product_id)?.price ?? 0) : 0">
+                                    <p class="text-xs text-gray-400 mt-1 text-right"
+                                       x-show="acc.product_id"
+                                       x-text="'Prix : ' + (ACCESSORY_PRODUCTS.find(p=>p.id==acc.product_id)?.price ?? 0).toLocaleString('fr-FR') + ' FCFA/u'"></p>
+                                </div>
                             </div>
-                            <div class="w-28">
-                                <input type="number" :name="`accessories[${index}][price]`"
-                                       x-model.number="acc.price" x-on:input="calcTotals"
-                                       min="0" step="100" placeholder="Prix"
-                                       class="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+
+                            {{-- Mode Nouveau : saisie libre --}}
+                            <div x-show="acc.mode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input type="hidden" :name="`accessories[${ai}][mode]`" value="custom">
+                                <input type="hidden" :name="`accessories[${ai}][product_id]`" value="">
+                                <div class="sm:col-span-1">
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom</label>
+                                    <input type="text" :name="`accessories[${ai}][name]`"
+                                           x-model="acc.name" placeholder="Ex : Boutons dorés..."
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
+                                    <input type="number" :name="`accessories[${ai}][qty]`"
+                                           x-model.number="acc.qty" x-on:input="calcTotals()"
+                                           min="1" placeholder="1"
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Prix unitaire</label>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" :name="`accessories[${ai}][price]`"
+                                               x-model.number="acc.price" x-on:input="calcTotals()"
+                                               min="0" step="100" placeholder="0"
+                                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
+                                        <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="button" x-on:click="removeAccessory(index)"
-                                    class="w-6 h-6 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors">
-                                <i data-lucide="x" style="width:13px;height:13px"></i>
-                            </button>
+
+                            {{-- Sous-total ligne --}}
+                            <div class="flex justify-end">
+                                <span class="text-xs text-gray-400">
+                                    Sous-total :
+                                    <strong class="text-dark" x-text="fmt(accLineTotal(acc))"></strong>
+                                </span>
+                            </div>
+
                         </div>
                     </template>
                 </div>
@@ -468,6 +570,30 @@ const GARMENT_TYPES = {!! json_encode($garmentTypes) !!};
 </form>
 
 <script>
+// ── Composant dropdown accessoire en stock ───────────────────────────────────
+function accSelect(acc) {
+    return {
+        asOpen: false,
+        asSearch: '',
+        asFiltered: ACCESSORY_PRODUCTS,
+        filterAcc() {
+            const q = this.asSearch.toLowerCase();
+            this.asFiltered = ACCESSORY_PRODUCTS.filter(p => p.name.toLowerCase().includes(q));
+        },
+        selectAcc(p, acc) {
+            if (!p) {
+                acc.product_id = null;
+                acc.price = 0;
+            } else {
+                acc.product_id = p.id;
+                acc.price = p.price;
+            }
+            const form = Alpine.$data(document.getElementById('quoteForm'));
+            if (form) form.calcTotals();
+        },
+    };
+}
+
 // ── Composant dropdown tissu en stock (par fabric slot) ──────────────────────
 function fabricSelect(fabric) {
     return {
@@ -559,12 +685,25 @@ function quoteForm() {
 
         // ── Accessoires ──
         addAccessory() {
-            this.accessories.push({ id: ++this.accCounter, name: '', qty: 1, price: 0 });
+            this.accessories.push({
+                _id: uid(), mode: 'stock',
+                product_id: null, name: '', qty: 1, price: 0
+            });
             this.$nextTick(() => lucide.createIcons());
         },
-        removeAccessory(index) {
-            this.accessories.splice(index, 1);
+        removeAccessory(ai) {
+            this.accessories.splice(ai, 1);
             this.calcTotals();
+        },
+
+        // Prix effectif d'une ligne accessoire
+        accLineTotal(acc) {
+            const qty = parseInt(acc.qty) || 1;
+            if (acc.mode === 'stock' && acc.product_id) {
+                const p = ACCESSORY_PRODUCTS.find(p => p.id == acc.product_id);
+                return (p?.price ?? 0) * qty;
+            }
+            return (parseFloat(acc.price) || 0) * qty;
         },
 
         // ── Calcul totaux ──
@@ -582,7 +721,7 @@ function quoteForm() {
                 }
             }
             this.fabricCost = fc;
-            this.accessoriesCost = this.accessories.reduce((s, a) => s + ((a.price||0) * (a.qty||1)), 0);
+            this.accessoriesCost = this.accessories.reduce((s, a) => s + this.accLineTotal(a), 0);
             this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;
         },
 

@@ -42,15 +42,16 @@ class QuoteController extends Controller
 
     public function create()
     {
-        $clients      = Client::orderBy('first_name')->get();
-        $fabrics      = Product::active()->tissus()->get();
+        $clients          = Client::orderBy('first_name')->get();
+        $fabrics          = Product::active()->tissus()->get();
+        $accessoryProducts = Product::active()->accessoires()->orderBy('name')->get();
         $garmentTypes = [
             'robe'    => 'Robe',    'costume'  => 'Costume',
             'pantalon'=> 'Pantalon','chemise'  => 'Chemise',
             'boubou'  => 'Boubou', 'ensemble' => 'Ensemble',
             'autre'   => 'Autre',
         ];
-        return view('orders.quotes.create', compact('clients', 'fabrics', 'garmentTypes'));
+        return view('orders.quotes.create', compact('clients', 'fabrics', 'accessoryProducts', 'garmentTypes'));
     }
 
     public function store(Request $request)
@@ -73,10 +74,12 @@ class QuoteController extends Controller
             'garments.*.fabrics.*.fabric_meters'      => 'nullable|numeric|min:0',
             'garments.*.fabrics.*.fabric_color'       => 'nullable|string|max:255',
             // Accessoires communs au devis
-            'accessories'           => 'nullable|array',
-            'accessories.*.name'    => 'nullable|string|max:255',
-            'accessories.*.qty'     => 'nullable|integer|min:1',
-            'accessories.*.price'   => 'nullable|numeric|min:0',
+            'accessories'                  => 'nullable|array',
+            'accessories.*.mode'           => 'nullable|in:stock,custom',
+            'accessories.*.product_id'     => 'nullable|exists:products,id',
+            'accessories.*.name'           => 'nullable|string|max:255',
+            'accessories.*.qty'            => 'nullable|integer|min:1',
+            'accessories.*.price'          => 'nullable|numeric|min:0',
             // Coût main d'œuvre global
             'labor_cost'            => 'required|numeric|min:0',
             'valid_until'           => 'nullable|date|after:today',
@@ -140,9 +143,31 @@ class QuoteController extends Controller
 
             // ── Accessoires ──
             $accessoriesCost = 0;
+            $accessoriesData = [];
             if (!empty($validated['accessories'])) {
                 foreach ($validated['accessories'] as $acc) {
-                    $accessoriesCost += floatval($acc['price'] ?? 0) * intval($acc['qty'] ?? 1);
+                    $price = floatval($acc['price'] ?? 0);
+                    $qty   = intval($acc['qty'] ?? 1);
+                    $name  = $acc['name'] ?? '';
+                    $mode  = $acc['mode'] ?? 'custom';
+
+                    // Si mode stock, récupérer le prix et le nom depuis le produit
+                    if ($mode === 'stock' && !empty($acc['product_id'])) {
+                        $product = Product::find($acc['product_id']);
+                        if ($product) {
+                            $price = $product->price ?? 0;
+                            $name  = $product->name;
+                        }
+                    }
+
+                    $accessoriesCost += $price * $qty;
+                    $accessoriesData[] = [
+                        'mode'       => $mode,
+                        'product_id' => $acc['product_id'] ?? null,
+                        'name'       => $name,
+                        'qty'        => $qty,
+                        'price'      => $price,
+                    ];
                 }
             }
 
@@ -153,7 +178,7 @@ class QuoteController extends Controller
                 'gender'           => $validated['gender'] ?? null,
                 'garments'         => $garmentsData,
                 'fabric_cost'      => $fabricCostTotal,
-                'accessories'      => $validated['accessories'] ?? [],
+                'accessories'      => $accessoriesData,
                 'accessories_cost' => $accessoriesCost,
                 'labor_cost'       => $validated['labor_cost'],
                 'total'            => $total,
