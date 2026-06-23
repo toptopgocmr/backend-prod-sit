@@ -134,4 +134,25 @@
                                 @endif
                             </div>
                         </td>
-                    </
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-5 py-16 text-center text-gray-400">
+                            <div class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="shopping-cart" class="w-8 h-8 text-gray-200"></i>
+                            </div>
+                            <p class="font-medium">Aucun bon de commande</p>
+                            <p class="text-xs mt-1">Créez votre premier bon de commande fournisseur.</p>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($orders->hasPages())
+            <div class="px-5 py-4 border-t border-gray-50">{{ $orders->links() }}</div>
+        @endif
+    </div>
+
+</div>
+@endsection

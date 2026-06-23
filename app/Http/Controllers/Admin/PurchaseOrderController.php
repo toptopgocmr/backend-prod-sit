@@ -154,4 +154,18 @@ class PurchaseOrderController extends Controller
                 // Lier la dépense au bon de commande
                 $purchaseOrder->update([
                     'status'         => 'received',
-                    'received_da
+                    'received_date'  => now()->toDateString(),
+                    'expense_id'     => $expense->id,
+                    'payment_method' => $paymentMethod,
+                ]);
+            } else {
+                $purchaseOrder->update([
+                    'status'        => 'received',
+                    'received_date' => now()->toDateString(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Réception enregistrée et dépense comptabilisée en finance.');
+    }
+}

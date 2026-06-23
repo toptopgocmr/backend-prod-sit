@@ -17,4 +17,9 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         // Carbon en français
-    
+        Carbon::setLocale('fr');
+
+        // Utiliser la pagination Tailwind (compatible avec le design GSIT)
+        Paginator::useTailwind();
+    }
+}

@@ -222,4 +222,32 @@
                  class="mx-6 mt-4 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl text-sm">
                 <i data-lucide="check-circle" class="w-4 h-4 text-green-600 shrink-0"></i>
                 {{ session('success') }}
-                <button @click="show=false" class="ml-auto text-green-500"><i data-lucide="x" s
+                <button @click="show=false" class="ml-auto text-green-500"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div x-data="{show:true}" x-show="show" x-init="setTimeout(()=>show=false,5000)"
+                 class="mx-6 mt-4 flex items-center gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-red-600 shrink-0"></i>
+                {{ session('error') }}
+                <button @click="show=false" class="ml-auto text-red-500"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+            </div>
+        @endif
+
+        <main class="flex-1 overflow-y-auto p-6">
+            @yield('content')
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+        function updateClock() {
+            const el = document.getElementById('clock');
+            if (el) el.textContent = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+        }
+        updateClock();
+        setInterval(updateClock, 30000);
+    </script>
+    @stack('scripts')
+</body>
+</html>

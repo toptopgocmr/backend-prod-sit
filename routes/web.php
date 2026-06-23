@@ -168,4 +168,17 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
 
-    // ─── Utilisateurs (admin seulement) ─�
+    // ─── Utilisateurs (admin seulement) ───────────────────────────
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('users', UserController::class);
+        Route::put('users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
+        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+    });
+});
+
+// ─── API (pour Flutter) ───────────────────────────────────────────────────
+Route::prefix('api')->group(function () {
+    require __DIR__ . '/api.php';
+});

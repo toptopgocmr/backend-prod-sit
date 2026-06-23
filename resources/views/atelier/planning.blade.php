@@ -137,4 +137,15 @@
                 </table>
             </div>
         </div>
-   
+    </div>
+    @empty
+    <div class="bg-white rounded-2xl border border-gray-100 px-5 py-16 text-center text-gray-400">
+        <div class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="calendar" class="w-8 h-8 text-gray-200"></i>
+        </div>
+        <p class="font-medium">Aucune commande en cours</p>
+    </div>
+    @endforelse
+
+</div>
+@endsection
