@@ -8,7 +8,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-5" x-data="{ editId: null, editName: '', editType: '', editIcon: '', editDesc: '' }">
+<div class="space-y-5" x-data="{ editId: null, editName: '', editType: '', editIcon: '', editDesc: '', editPrice: 0 }">
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
@@ -71,6 +71,18 @@
                            placeholder="Description courte..."
                            class="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
                 </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                        Prix par défaut
+                        <span class="font-normal text-gray-400">(FCFA / unité ou mètre)</span>
+                    </label>
+                    <div class="relative">
+                        <input type="number" name="price" value="{{ old('price', 0) }}" min="0" step="100"
+                               placeholder="0"
+                               class="w-full px-3 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">FCFA</span>
+                    </div>
+                </div>
                 <button type="submit"
                         class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-orange-600 transition-all">
                     <i data-lucide="plus" class="w-4 h-4"></i>
@@ -103,6 +115,12 @@
                                 </span>
                                 <span class="text-xs text-gray-300">•</span>
                                 <span class="text-xs text-gray-400">{{ $cat->products_count }} produit(s)</span>
+                                @if($cat->price > 0)
+                                <span class="text-xs text-gray-300">•</span>
+                                <span class="text-xs font-semibold text-primary">
+                                    {{ number_format($cat->price, 0, ',', ' ') }} FCFA
+                                </span>
+                                @endif
                                 @if($cat->description)
                                 <span class="text-xs text-gray-300">•</span>
                                 <span class="text-xs text-gray-400 truncate">{{ $cat->description }}</span>
@@ -120,7 +138,7 @@
                             </form>
                             {{-- Modifier --}}
                             <button type="button" title="Modifier"
-                                    @click="editId={{ $cat->id }}; editName='{{ addslashes($cat->name) }}'; editType='{{ $cat->type }}'; editIcon='{{ $cat->icon }}'; editDesc='{{ addslashes($cat->description ?? '') }}'"
+                                    @click="editId={{ $cat->id }}; editName='{{ addslashes($cat->name) }}'; editType='{{ $cat->type }}'; editIcon='{{ $cat->icon }}'; editDesc='{{ addslashes($cat->description ?? '') }}'; editPrice={{ $cat->price ?? 0 }}"
                                     class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
                                 <i data-lucide="pencil" class="w-4 h-4 text-gray-400"></i>
                             </button>
@@ -168,6 +186,16 @@
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
                                 <input type="text" name="description" x-model="editDesc"
                                        class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                    Prix défaut <span class="font-normal text-gray-400">(FCFA)</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" name="price" x-model.number="editPrice" min="0" step="100"
+                                           class="w-full px-3 py-2 pr-14 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">FCFA</span>
+                                </div>
                             </div>
                         </div>
                         <div class="flex gap-2">

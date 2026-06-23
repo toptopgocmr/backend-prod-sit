@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Category extends Model {
     use HasFactory;
-    protected $fillable = ['name','slug','type','icon','description','is_active'];
+    protected $fillable = ['name','slug','type','icon','description','price','is_active'];
+    protected $casts    = ['price' => 'decimal:2', 'is_active' => 'boolean'];
     public function products() { return $this->hasMany(Product::class); }
 }

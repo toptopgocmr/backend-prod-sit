@@ -22,6 +22,7 @@ class CategoryController extends Controller
             'type'        => 'required|in:tissu,accessoire,pret_a_porter,autre',
             'icon'        => 'nullable|string|max:10',
             'description' => 'nullable|string|max:255',
+            'price'       => 'nullable|numeric|min:0',
         ]);
 
         $validated['slug']      = Str::slug($validated['name']);
@@ -39,6 +40,7 @@ class CategoryController extends Controller
             'type'        => 'required|in:tissu,accessoire,pret_a_porter,autre',
             'icon'        => 'nullable|string|max:10',
             'description' => 'nullable|string|max:255',
+            'price'       => 'nullable|numeric|min:0',
             'is_active'   => 'boolean',
         ]);
 
