@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -66,8 +67,15 @@ return new class extends Migration
                     $reference = 'TIS-' . strtoupper(substr(str_replace(' ', '', $fabricName), 0, 6));
                 }
 
+                // `slug` n'a pas de valeur par défaut en base et n'est
+                // auto-généré que par l'event "creating" du modèle Eloquent
+                // Product — qui ne se déclenche pas avec un DB::table()
+                // ->insert() brut. On le génère donc ici manuellement.
+                $slug = Str::slug($fabricName) . '-' . strtolower(Str::random(6));
+
                 DB::table('products')->insert([
                     'name'              => $fabricName,
+                    'slug'              => $slug,
                     'reference'         => $reference,
                     'type'              => 'tissu',
                     'category_id'       => $categoryId,
