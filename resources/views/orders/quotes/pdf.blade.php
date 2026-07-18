@@ -149,7 +149,7 @@
             </tr>
             @endif
             <tr>
-                <td>Main d'œuvre — confection {{ $quote->garment_type ?? '' }}</td>
+                <td>Couture — confection {{ $quote->garment_type ?? '' }}</td>
                 <td style="text-align:right">1</td>
                 <td style="text-align:right">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</td>
                 <td style="text-align:right; font-weight:600">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</td>

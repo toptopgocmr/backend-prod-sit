@@ -45,6 +45,14 @@
         .badge-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
         @keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:.4} }
         .pulse-dot { animation: pulse-dot 2s infinite; }
+
+        /* Fond décoratif "ciseaux" (motif tissé/couture) sur toutes les pages admin */
+        .app-content {
+            position: relative;
+            background-color: #F8F7F5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%231A1A2E' stroke-opacity='0.05' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(20 20) rotate(15)'%3E%3Cpath d='M6 6 L34 34 M34 6 L6 34'/%3E%3Ccircle cx='6' cy='6' r='6.5'/%3E%3Ccircle cx='34' cy='6' r='6.5'/%3E%3C/g%3E%3Cg transform='translate(100 90) rotate(-25)'%3E%3Cpath d='M6 6 L34 34 M34 6 L6 34'/%3E%3Ccircle cx='6' cy='6' r='6.5'/%3E%3Ccircle cx='34' cy='6' r='6.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
     </style>
     @stack('styles')
 </head>
@@ -234,7 +242,7 @@
             </div>
         @endif
 
-        <main class="flex-1 overflow-y-auto p-6">
+        <main class="flex-1 overflow-y-auto p-6 app-content">
             @yield('content')
         </main>
     </div>

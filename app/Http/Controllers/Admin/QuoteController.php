@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\{Quote, CustomOrder, Client, Product, User, Measurement};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuoteController extends Controller
@@ -87,6 +89,7 @@ class QuoteController extends Controller
             'notes'                 => 'nullable|string',
         ]);
 
+        try {
         DB::transaction(function () use ($validated, $request) {
 
             // ── Calcul du coût tissu total (tous vêtements confondus) ──
@@ -108,7 +111,7 @@ class QuoteController extends Controller
                         $fabricProductId     = $product?->id;
                         $meters              = floatval($fabric['fabric_meters'] ?? 0);
                         $cost                = ($product?->price_per_meter ?? 0) * $meters;
-                        $fabricPricePerMeter = $product?->price_per_meter;
+                        $fabricPricePerMeter = $product?->price_per_meter ?? 0;
                     } elseif (!empty($fabric['fabric_name']) && !empty($fabric['fabric_meters'])) {
                         $fabricName          = $fabric['fabric_name'];
                         $fabricPricePerMeter = floatval($fabric['fabric_price_per_meter'] ?? 0);
@@ -189,6 +192,16 @@ class QuoteController extends Controller
                 'notes'            => $validated['notes'] ?? null,
             ]);
         });
+        } catch (Throwable $e) {
+            Log::error('Erreur lors de la création du devis : ' . $e->getMessage(), [
+                'exception' => $e,
+                'user_id'   => auth()->id(),
+            ]);
+
+            return back()->withInput()->with('error',
+                "Impossible d'enregistrer le devis. Vérifiez les tissus, accessoires et le coût de couture saisis, puis réessayez. Si le problème persiste, contactez l'administrateur."
+            );
+        }
 
         return redirect()->route('quotes.index')->with('success', 'Devis créé avec succès.');
     }

@@ -219,13 +219,13 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                                                     {{-- Toggle En stock / Hors stock --}}
                                                     <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
                                                         <button type="button"
-                                                                x-on:click="fabric.mode = 'stock'; calcTotals()"
+                                                                x-on:click="fabric.mode = 'stock'; fabric.fabric_name=''; fabric.fabric_price_per_meter=0; calcTotals()"
                                                                 class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
                                                                 :class="fabric.mode === 'stock' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
                                                             En stock
                                                         </button>
                                                         <button type="button"
-                                                                x-on:click="fabric.mode = 'custom'; calcTotals()"
+                                                                x-on:click="fabric.mode = 'custom'; fabric.fabric_product_id=null; calcTotals()"
                                                                 class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
                                                                 :class="fabric.mode === 'custom' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
                                                             Hors stock
@@ -247,7 +247,7 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                                                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tissu en stock</label>
                                                     <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][fabric_product_id]`"
                                                            x-model="fabric.fabric_product_id">
-                                                    <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][mode]`" value="stock">
+                                                    <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][mode]`" :value="fabric.mode">
                                                     <div class="relative">
                                                         <button type="button" x-on:click="fsOpen = !fsOpen"
                                                                 class="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
@@ -288,7 +288,6 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
 
                                             {{-- Mode Hors stock --}}
                                             <div x-show="fabric.mode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                <input type="hidden" :name="`garments[${gi}][fabrics][${fi}][mode]`" value="custom">
                                                 <div>
                                                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du tissu</label>
                                                     <input type="text" :name="`garments[${gi}][fabrics][${fi}][fabric_name]`"
@@ -364,13 +363,13 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             <div class="flex items-center justify-between">
                                 <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
                                     <button type="button"
-                                            x-on:click="acc.mode = 'stock'; calcTotals()"
+                                            x-on:click="acc.mode = 'stock'; acc.name=''; acc.price=0; calcTotals()"
                                             class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
                                             :class="acc.mode === 'stock' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'">
                                         En stock
                                     </button>
                                     <button type="button"
-                                            x-on:click="acc.mode = 'custom'; calcTotals()"
+                                            x-on:click="acc.mode = 'custom'; acc.product_id=null; acc.name=''; acc.price=0; calcTotals()"
                                             class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
                                             :class="acc.mode === 'custom' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'">
                                         Nouveau
@@ -384,14 +383,13 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
 
                             {{-- Mode En stock : sélection depuis catalogue --}}
                             <div x-show="acc.mode === 'stock'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <input type="hidden" :name="`accessories[${ai}][mode]`" value="stock">
+                                <input type="hidden" :name="`accessories[${ai}][mode]`" :value="acc.mode">
                                 <div class="sm:col-span-2"
                                      x-data="accSelect(acc)"
                                      x-init="asFiltered = ACCESSORY_PRODUCTS">
                                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Accessoire en stock</label>
                                     <input type="hidden" :name="`accessories[${ai}][product_id]`" x-model="acc.product_id">
-                                    <input type="hidden" :name="`accessories[${ai}][name]`"
-                                           :value="acc.product_id ? (ACCESSORY_PRODUCTS.find(p=>p.id==acc.product_id)?.name ?? '') : ''">
+                                    <input type="hidden" :name="`accessories[${ai}][name]`" x-model="acc.name">
                                     <div class="relative">
                                         <button type="button" x-on:click="asOpen = !asOpen"
                                                 class="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all">
@@ -439,8 +437,6 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
 
                             {{-- Mode Nouveau : saisie libre --}}
                             <div x-show="acc.mode === 'custom'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <input type="hidden" :name="`accessories[${ai}][mode]`" value="custom">
-                                <input type="hidden" :name="`accessories[${ai}][product_id]`" value="">
                                 <div class="sm:col-span-1">
                                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom</label>
                                     <input type="text" :name="`accessories[${ai}][name]`"
@@ -537,7 +533,7 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             <span class="font-semibold text-dark" x-text="fmt(accessoriesCost)"></span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500">
-                            <span>Main d'œuvre <span class="text-red-400">*</span></span>
+                            <span>Couture <span class="text-red-400">*</span></span>
                             <div class="flex items-center gap-1">
                                 <input type="number" name="labor_cost" x-model.number="laborCost" x-on:input="calcTotals"
                                        value="{{ old('labor_cost', 0) }}" min="0" step="500" placeholder="0" required
@@ -584,9 +580,11 @@ function accSelect(acc) {
             if (!p) {
                 acc.product_id = null;
                 acc.price = 0;
+                acc.name = '';
             } else {
                 acc.product_id = p.id;
                 acc.price = p.price;
+                acc.name = p.name;
             }
             const form = Alpine.$data(document.getElementById('quoteForm'));
             if (form) form.calcTotals();
