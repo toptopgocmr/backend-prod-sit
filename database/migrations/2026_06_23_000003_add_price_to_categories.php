@@ -8,11 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            // Prix par défaut pour les produits de cette catégorie
-            // Tissu  → prix au mètre ; Accessoire / Prêt-à-porter → prix unitaire
-            $table->decimal('price', 10, 2)->default(0)->after('description');
-        });
+        if (!Schema::hasColumn('categories', 'price')) {
+            Schema::table('categories', function (Blueprint $table) {
+                // Prix par défaut pour les produits de cette catégorie
+                // Tissu  → prix au mètre ; Accessoire / Prêt-à-porter → prix unitaire
+                $table->decimal('price', 10, 2)->default(0)->after('description');
+            });
+        }
     }
 
     public function down(): void
