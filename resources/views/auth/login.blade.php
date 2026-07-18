@@ -20,6 +20,17 @@
             overflow: hidden;
         }
 
+        /* ── Motif vêtements + ciseaux en fond ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg fill='none' stroke='%230a0a0a' stroke-opacity='0.05' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(24 20) rotate(-8)'%3E%3Cpath d='M9,3 L3,3 L0,9 L4,12 L7,10 L7,27 L22,27 L22,10 L25,12 L29,9 L26,3 L20,3 C20,3 19,6 14.5,6 C10,6 9,3 9,3 Z'/%3E%3C/g%3E%3Cg transform='translate(140 130) rotate(18)'%3E%3Cpath d='M6 6 L34 34 M34 6 L6 34'/%3E%3Ccircle cx='6' cy='6' r='6.5'/%3E%3Ccircle cx='34' cy='6' r='6.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
+
         /* ── Formes colorées style TopTopGo ── */
         .shape {
             position: fixed;
