@@ -114,7 +114,7 @@
                     <span class="font-semibold text-dark">{{ number_format($quote->fabric_cost, 0, ',', ' ') }} FCFA</span>
                 </div>
                 <div class="flex justify-between text-sm text-gray-500">
-                    <span>Couture</span>
+                    <span>Confection</span>
                     <span class="font-semibold text-dark">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</span>
                 </div>
                 <div class="flex justify-between text-sm text-gray-500">

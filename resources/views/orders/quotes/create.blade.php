@@ -533,7 +533,7 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             <span class="font-semibold text-dark" x-text="fmt(accessoriesCost)"></span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500">
-                            <span>Couture <span class="text-red-400">*</span></span>
+                            <span>Confection <span class="text-red-400">*</span></span>
                             <div class="flex items-center gap-1">
                                 <input type="number" name="labor_cost" x-model.number="laborCost" x-on:input="calcTotals"
                                        value="{{ old('labor_cost', 0) }}" min="0" step="500" placeholder="0" required

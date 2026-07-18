@@ -199,7 +199,7 @@ class QuoteController extends Controller
             ]);
 
             return back()->withInput()->with('error',
-                "Impossible d'enregistrer le devis. Vérifiez les tissus, accessoires et le coût de couture saisis, puis réessayez. Si le problème persiste, contactez l'administrateur."
+                "Impossible d'enregistrer le devis. Vérifiez les tissus, accessoires et le coût de confection saisis, puis réessayez. Si le problème persiste, contactez l'administrateur."
             );
         }
 

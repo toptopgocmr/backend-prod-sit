@@ -178,7 +178,7 @@ return [
         'client_id'      => 'client',
         'gender'         => 'genre',
         'garments'       => 'vêtements',
-        'labor_cost'     => 'coût de couture',
+        'labor_cost'     => 'coût de confection',
         'valid_until'    => 'date de validité',
         'delivery_date'  => 'date de livraison',
         'notes'          => 'notes',
