@@ -158,62 +158,81 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             </div>
 
                             {{-- Champs vêtement --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div x-data="garmentTypeSelect(garment)">
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Type(s) de vêtement</label>
-                                    <input type="hidden" :name="`garments[${gi}][garment_type]`" :value="garment.garment_types.join(', ')">
-                                    <div class="relative">
-                                        <div x-on:click="open = true; $nextTick(() => $refs.gtInput.focus())"
-                                             class="w-full min-h-[38px] flex flex-wrap items-center gap-1.5 px-2 py-1.5 rounded-xl border border-gray-200 bg-white cursor-text focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-                                            <template x-for="(t, ti) in garment.garment_types" :key="ti">
-                                                <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2 py-1 rounded-lg">
-                                                    <span x-text="t"></span>
-                                                    <button type="button" x-on:click.stop="removeType(ti)" class="hover:text-blue-900">
-                                                        <i data-lucide="x" style="width:11px;height:11px"></i>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <label class="block text-xs font-semibold text-gray-600">
+                                            Type(s) de vêtement
+                                            <span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold ml-1"
+                                                  x-text="garment.garment_types.length"></span>
+                                        </label>
+                                        <button type="button" x-on:click="addGarmentType(gi)"
+                                                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg font-semibold transition-colors">
+                                            <i data-lucide="plus" style="width:12px;height:12px"></i> Ajouter un type
+                                        </button>
+                                    </div>
+                                    <input type="hidden" :name="`garments[${gi}][garment_type]`"
+                                           :value="garment.garment_types.map(t => t.value).filter(v => v && v.trim()).join(', ')">
+                                    <div class="space-y-2">
+                                        <template x-for="(gt, gti) in garment.garment_types" :key="gt._id">
+                                            <div class="space-y-1.5" :class="gt.mode === 'custom' ? 'p-2 rounded-xl bg-gray-50' : ''">
+                                                <input type="hidden" :name="`garments[${gi}][garment_type_entries][${gti}][value]`" :value="gt.value">
+                                                <input type="hidden" :name="`garments[${gi}][garment_type_entries][${gti}][price]`" :value="gt.mode === 'custom' ? (gt.price || 0) : 0">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="inline-flex rounded-lg bg-gray-100 p-0.5 shrink-0">
+                                                        <button type="button"
+                                                                x-on:click="gt.mode = 'list'; gt.value = ''; gt.price = 0; calcTotals()"
+                                                                class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                                                :class="gt.mode === 'list' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                                                            Liste
+                                                        </button>
+                                                        <button type="button"
+                                                                x-on:click="gt.mode = 'custom'; gt.value = ''; gt.price = 0; calcTotals()"
+                                                                class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
+                                                                :class="gt.mode === 'custom' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                                                            Manuel
+                                                        </button>
+                                                    </div>
+                                                    <select x-show="gt.mode === 'list'" x-model="gt.value"
+                                                            class="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                        <option value="">— Choisir —</option>
+                                                        <template x-for="[val, lbl] in Object.entries(GARMENT_TYPES)" :key="val">
+                                                            <option :value="lbl" x-text="lbl" :selected="gt.value === lbl"></option>
+                                                        </template>
+                                                    </select>
+                                                    <input x-show="gt.mode === 'custom'" type="text" x-model="gt.value"
+                                                           placeholder="Ex : Kimono, Djellaba..."
+                                                           class="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                                    <button type="button" x-show="garment.garment_types.length > 1"
+                                                            x-on:click="removeGarmentType(gi, gti)"
+                                                            class="w-9 h-9 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-colors shrink-0">
+                                                        <i data-lucide="x" style="width:14px;height:14px"></i>
                                                     </button>
-                                                </span>
-                                            </template>
-                                            <input x-ref="gtInput" type="text" x-model="query"
-                                                   x-on:input="filter()" x-on:keydown.enter.prevent="addFromQuery()"
-                                                   x-on:keydown.backspace="if(!query && garment.garment_types.length) removeType(garment.garment_types.length-1)"
-                                                   x-on:focus="open = true"
-                                                   :placeholder="garment.garment_types.length ? '' : 'Choisir ou écrire un type...'"
-                                                   class="flex-1 min-w-[100px] text-sm text-dark focus:outline-none py-0.5 bg-transparent">
-                                        </div>
-                                        <div x-show="open" x-on:click.outside="open=false" x-transition
-                                             class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                                            <ul class="max-h-48 overflow-y-auto">
-                                                <template x-for="[val, lbl] in filtered" :key="val">
-                                                    <li x-on:click="addType(lbl); open=false"
-                                                        class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-dark flex items-center justify-between">
-                                                        <span x-text="lbl"></span>
-                                                        <i data-lucide="check" style="width:12px;height:12px" class="text-blue-600" x-show="garment.garment_types.includes(lbl)"></i>
-                                                    </li>
-                                                </template>
-                                                <li x-show="query.trim() && !garment.garment_types.includes(query.trim())"
-                                                    x-on:click="addFromQuery(); open=false"
-                                                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-blue-700 font-semibold flex items-center gap-1.5 border-t border-gray-50">
-                                                    <i data-lucide="plus" style="width:12px;height:12px"></i>
-                                                    <span>Ajouter «<span x-text="query"></span>»</span>
-                                                </li>
-                                                <li x-show="filtered.length === 0 && !query.trim()" class="px-3 py-4 text-center text-gray-400 text-xs">
-                                                    Aucun résultat — tapez pour créer un type.
-                                                </li>
-                                            </ul>
-                                        </div>
+                                                </div>
+                                                <div x-show="gt.mode === 'custom'" class="flex items-center justify-end gap-1.5">
+                                                    <span class="text-xs text-gray-400">Prix supplémentaire pour ce type :</span>
+                                                    <input type="number" x-model.number="gt.price" x-on:input="calcTotals()"
+                                                           min="0" step="100" placeholder="0"
+                                                           class="w-28 px-2 py-1 rounded-lg border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                                    <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du modèle</label>
-                                    <input type="text" :name="`garments[${gi}][model_name]`" x-model="garment.model_name"
-                                           placeholder="Ex : Robe soirée, Boubou..."
-                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
-                                    <input type="number" :name="`garments[${gi}][qty]`" x-model.number="garment.qty"
-                                           min="1" value="1"
-                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du modèle</label>
+                                        <input type="text" :name="`garments[${gi}][model_name]`" x-model="garment.model_name"
+                                               placeholder="Ex : Robe soirée, Boubou..."
+                                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
+                                        <input type="number" :name="`garments[${gi}][qty]`" x-model.number="garment.qty"
+                                               min="1" value="1"
+                                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -563,6 +582,10 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             <span class="font-semibold text-dark" x-text="fmt(fabricCost)"></span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
+                            <span>Types de vêtement (suppl.)</span>
+                            <span class="font-semibold text-dark" x-text="fmt(garmentTypeCost)"></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
                             <span>Accessoires</span>
                             <span class="font-semibold text-dark" x-text="fmt(accessoriesCost)"></span>
                         </div>
@@ -626,35 +649,6 @@ function accSelect(acc) {
     };
 }
 
-// ── Composant multi-select "type de vêtement" (choix + saisie libre) ────────
-function garmentTypeSelect(garment) {
-    return {
-        open: false,
-        query: '',
-        filtered: Object.entries(GARMENT_TYPES),
-        filter() {
-            const q = this.query.toLowerCase();
-            this.filtered = Object.entries(GARMENT_TYPES).filter(([val, lbl]) => lbl.toLowerCase().includes(q));
-        },
-        addType(lbl) {
-            if (!garment.garment_types.includes(lbl)) garment.garment_types.push(lbl);
-            this.query = '';
-            this.filtered = Object.entries(GARMENT_TYPES);
-            this.$nextTick(() => this.$refs.gtInput?.focus());
-        },
-        addFromQuery() {
-            const v = this.query.trim();
-            if (!v) return;
-            if (!garment.garment_types.includes(v)) garment.garment_types.push(v);
-            this.query = '';
-            this.filtered = Object.entries(GARMENT_TYPES);
-        },
-        removeType(i) {
-            garment.garment_types.splice(i, 1);
-        },
-    };
-}
-
 // ── Composant dropdown tissu en stock (par fabric slot) ──────────────────────
 function fabricSelect(fabric) {
     return {
@@ -713,8 +707,11 @@ function quoteForm() {
         return { _id: uid(), mode: 'stock', fabric_product_id: null, _stockPrice: 0,
                  fabric_name: '', fabric_price_per_meter: 0, fabric_meters: 0, fabric_color: '' };
     }
+    function newGarmentType() {
+        return { _id: uid(), mode: 'list', value: '', price: 0 };
+    }
     function newGarment() {
-        return { _id: uid(), garment_types: [], model_name: '', model_description: '',
+        return { _id: uid(), garment_types: [newGarmentType()], model_name: '', model_description: '',
                  qty: 1, fabrics: [newFabric()] };
     }
 
@@ -722,7 +719,7 @@ function quoteForm() {
         clientId: '', gender: 'femme',
         garments: [newGarment()],
         accessories: [], accCounter: 0,
-        laborCost: 0, fabricCost: 0, accessoriesCost: 0, total: 0,
+        laborCost: 0, fabricCost: 0, garmentTypeCost: 0, accessoriesCost: 0, total: 0,
 
         // ── Vêtements ──
         addGarment() {
@@ -731,6 +728,16 @@ function quoteForm() {
         },
         removeGarment(gi) {
             this.garments.splice(gi, 1);
+            this.calcTotals();
+        },
+
+        // ── Types de vêtement ──
+        addGarmentType(gi) {
+            this.garments[gi].garment_types.push(newGarmentType());
+            this.$nextTick(() => lucide.createIcons());
+        },
+        removeGarmentType(gi, gti) {
+            this.garments[gi].garment_types.splice(gti, 1);
             this.calcTotals();
         },
 
@@ -770,6 +777,7 @@ function quoteForm() {
         // ── Calcul totaux ──
         calcTotals() {
             let fc = 0;
+            let gtc = 0;
             for (const g of this.garments) {
                 for (const f of g.fabrics) {
                     const meters = parseFloat(f.fabric_meters) || 0;
@@ -780,10 +788,16 @@ function quoteForm() {
                         fc += (parseFloat(f.fabric_price_per_meter) || 0) * meters;
                     }
                 }
+                for (const gt of g.garment_types) {
+                    if (gt.mode === 'custom') {
+                        gtc += parseFloat(gt.price) || 0;
+                    }
+                }
             }
             this.fabricCost = fc;
+            this.garmentTypeCost = gtc;
             this.accessoriesCost = this.accessories.reduce((s, a) => s + this.accLineTotal(a), 0);
-            this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost;
+            this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost + this.garmentTypeCost;
         },
 
         fmt(v) { return new Intl.NumberFormat('fr-FR').format(Math.round(v || 0)) + ' ' + CURRENCY; },

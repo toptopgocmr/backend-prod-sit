@@ -113,6 +113,15 @@
                     <span>Tissu</span>
                     <span class="font-semibold text-dark">{{ number_format($quote->fabric_cost, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @php
+                    $garmentTypeCostTotal = collect($quote->garments ?? [])->sum('garment_type_cost');
+                @endphp
+                @if($garmentTypeCostTotal > 0)
+                <div class="flex justify-between text-sm text-gray-500">
+                    <span>Types de vêtement (suppl.)</span>
+                    <span class="font-semibold text-dark">{{ number_format($garmentTypeCostTotal, 0, ',', ' ') }} FCFA</span>
+                </div>
+                @endif
                 <div class="flex justify-between text-sm text-gray-500">
                     <span>Confection</span>
                     <span class="font-semibold text-dark">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</span>

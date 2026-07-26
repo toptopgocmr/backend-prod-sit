@@ -154,6 +154,14 @@
                 <td style="text-align:right">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</td>
                 <td style="text-align:right; font-weight:600">{{ number_format($quote->labor_cost, 0, ',', ' ') }} FCFA</td>
             </tr>
+            @foreach(collect($quote->garments ?? [])->flatMap(fn($g) => $g['garment_type_entries'] ?? [])->filter(fn($e) => ($e['price'] ?? 0) > 0) as $typeEntry)
+            <tr>
+                <td>Type de vêtement — {{ $typeEntry['value'] }}</td>
+                <td style="text-align:right">1</td>
+                <td style="text-align:right">{{ number_format($typeEntry['price'], 0, ',', ' ') }} FCFA</td>
+                <td style="text-align:right; font-weight:600">{{ number_format($typeEntry['price'], 0, ',', ' ') }} FCFA</td>
+            </tr>
+            @endforeach
             @if($quote->accessories && count($quote->accessories))
                 @foreach($quote->accessories as $acc)
                 <tr>

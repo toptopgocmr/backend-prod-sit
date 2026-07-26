@@ -64,6 +64,9 @@ class QuoteController extends Controller
             // Garments (multi-vêtements)
             'garments'              => 'required|array|min:1',
             'garments.*.garment_type'    => 'nullable|string|max:100',
+            'garments.*.garment_type_entries'              => 'nullable|array',
+            'garments.*.garment_type_entries.*.value'      => 'nullable|string|max:100',
+            'garments.*.garment_type_entries.*.price'      => 'nullable|numeric|min:0',
             'garments.*.model_name'      => 'nullable|string|max:255',
             'garments.*.model_description' => 'nullable|string',
             'garments.*.qty'             => 'nullable|integer|min:1',
@@ -93,12 +96,25 @@ class QuoteController extends Controller
         DB::transaction(function () use ($validated, $request) {
 
             // ── Calcul du coût tissu total (tous vêtements confondus) ──
-            $fabricCostTotal = 0;
-            $garmentsData    = [];
+            $fabricCostTotal      = 0;
+            $garmentTypeCostTotal = 0;
+            $garmentsData         = [];
 
             foreach ($validated['garments'] as $garment) {
                 $garmentFabrics    = [];
                 $garmentFabricCost = 0;
+
+                // ── Types de vêtement (saisie manuelle = prix supplémentaire possible) ──
+                $garmentTypeEntries = [];
+                $garmentTypeCost    = 0;
+                foreach ($garment['garment_type_entries'] ?? [] as $entry) {
+                    $value = trim($entry['value'] ?? '');
+                    if ($value === '') continue;
+                    $price = floatval($entry['price'] ?? 0);
+                    $garmentTypeCost += $price;
+                    $garmentTypeEntries[] = ['value' => $value, 'price' => $price];
+                }
+                $garmentTypeCostTotal += $garmentTypeCost;
 
                 foreach ($garment['fabrics'] ?? [] as $fabric) {
                     $cost = 0;
@@ -135,12 +151,14 @@ class QuoteController extends Controller
                 $fabricCostTotal += $garmentFabricCost;
 
                 $garmentsData[] = [
-                    'garment_type'      => $garment['garment_type'] ?? null,
-                    'model_name'        => $garment['model_name'] ?? null,
-                    'model_description' => $garment['model_description'] ?? null,
-                    'qty'               => intval($garment['qty'] ?? 1),
-                    'fabrics'           => $garmentFabrics,
-                    'fabric_cost'       => $garmentFabricCost,
+                    'garment_type'         => $garment['garment_type'] ?? null,
+                    'garment_type_entries' => $garmentTypeEntries,
+                    'garment_type_cost'    => $garmentTypeCost,
+                    'model_name'           => $garment['model_name'] ?? null,
+                    'model_description'    => $garment['model_description'] ?? null,
+                    'qty'                  => intval($garment['qty'] ?? 1),
+                    'fabrics'              => $garmentFabrics,
+                    'fabric_cost'          => $garmentFabricCost,
                 ];
             }
 
@@ -174,7 +192,7 @@ class QuoteController extends Controller
                 }
             }
 
-            $total = $fabricCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
+            $total = $fabricCostTotal + $garmentTypeCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
 
             Quote::create([
                 'client_id'        => $validated['client_id'],
