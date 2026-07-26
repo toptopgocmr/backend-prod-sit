@@ -172,6 +172,14 @@
                 </tr>
                 @endforeach
             @endif
+            @if($quote->discount_amount > 0)
+            <tr>
+                <td colspan="3" style="text-align:right">
+                    Remise{{ $quote->discount_type === 'percent' ? ' (' . rtrim(rtrim(number_format($quote->discount_value, 2), '0'), '.') . '%)' : '' }}
+                </td>
+                <td style="text-align:right; font-weight:600; color:#dc2626">− {{ number_format($quote->discount_amount, 0, ',', ' ') }} FCFA</td>
+            </tr>
+            @endif
         </tbody>
     </table>
 

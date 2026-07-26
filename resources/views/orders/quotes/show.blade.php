@@ -130,6 +130,12 @@
                     <span>Accessoires</span>
                     <span class="font-semibold text-dark">{{ number_format($quote->accessories_cost, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @if($quote->discount_amount > 0)
+                <div class="flex justify-between text-sm text-gray-500">
+                    <span>Remise{{ $quote->discount_type === 'percent' ? ' (' . rtrim(rtrim(number_format($quote->discount_value, 2), '0'), '.') . '%)' : '' }}</span>
+                    <span class="font-semibold text-red-500">− {{ number_format($quote->discount_amount, 0, ',', ' ') }} FCFA</span>
+                </div>
+                @endif
                 <div class="border-t border-gray-100 pt-3 flex justify-between">
                     <span class="font-display font-bold text-dark">TOTAL</span>
                     <span class="text-xl font-display font-bold text-purple-600">{{ number_format($quote->total, 0, ',', ' ') }} FCFA</span>

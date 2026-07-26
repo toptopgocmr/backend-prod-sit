@@ -596,11 +596,36 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                         <div class="flex justify-between items-center text-sm text-gray-500">
                             <span>Confection <span class="text-red-400">*</span></span>
                             <div class="flex items-center gap-1">
-                                <input type="number" name="labor_cost" x-model.number="laborCost" x-on:input="calcTotals"
+                                <input type="number" name="labor_cost" x-model.number="laborCost" x-on:input="calcTotals()"
                                        value="{{ old('labor_cost', 0) }}" min="0" step="500" placeholder="0" required
                                        class="w-28 px-2 py-1 rounded-lg border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                                 <span class="text-xs text-gray-400" x-text="CURRENCY"></span>
                             </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-2 flex items-center justify-between text-sm text-gray-500">
+                            <span>Remise</span>
+                            <div class="flex items-center gap-1">
+                                <input type="hidden" name="discount_type" :value="discountType">
+                                <div class="inline-flex rounded-lg bg-gray-100 p-0.5">
+                                    <button type="button" x-on:click="discountType = 'fixed'; calcTotals()"
+                                            class="px-2 py-0.5 rounded-md text-xs font-semibold transition-all"
+                                            :class="discountType === 'fixed' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'"
+                                            x-text="CURRENCY">
+                                    </button>
+                                    <button type="button" x-on:click="discountType = 'percent'; calcTotals()"
+                                            class="px-2 py-0.5 rounded-md text-xs font-semibold transition-all"
+                                            :class="discountType === 'percent' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'">
+                                        %
+                                    </button>
+                                </div>
+                                <input type="number" name="discount_value" x-model.number="discountValue" x-on:input="calcTotals()"
+                                       min="0" :max="discountType === 'percent' ? 100 : null" :step="discountType === 'percent' ? 1 : 500" placeholder="0"
+                                       class="w-20 px-2 py-1 rounded-lg border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-sm" x-show="discountAmount > 0">
+                            <span class="text-gray-500">Montant de la remise</span>
+                            <span class="font-semibold text-red-500">− <span x-text="fmt(discountAmount)"></span></span>
                         </div>
                         <div class="border-t border-gray-100 pt-2 flex justify-between">
                             <span class="text-sm font-display font-bold text-dark">TOTAL ESTIMÉ</span>
@@ -724,6 +749,7 @@ function quoteForm() {
         garments: [newGarment()],
         accessories: [], accCounter: 0,
         laborCost: 0, fabricCost: 0, garmentTypeCost: 0, accessoriesCost: 0, total: 0,
+        discountType: 'fixed', discountValue: 0, discountAmount: 0,
 
         // ── Vêtements ──
         addGarment() {
@@ -802,7 +828,20 @@ function quoteForm() {
             this.fabricCost = fc;
             this.garmentTypeCost = gtc;
             this.accessoriesCost = this.accessories.reduce((s, a) => s + this.accLineTotal(a), 0);
-            this.total = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost + this.garmentTypeCost;
+
+            const subtotal = this.fabricCost + (this.laborCost || 0) + this.accessoriesCost + this.garmentTypeCost;
+
+            let discount = 0;
+            const discountValue = parseFloat(this.discountValue) || 0;
+            if (this.discountType === 'percent') {
+                discount = subtotal * (Math.min(discountValue, 100) / 100);
+            } else {
+                discount = discountValue;
+            }
+            discount = Math.min(Math.max(discount, 0), subtotal);
+
+            this.discountAmount = discount;
+            this.total = subtotal - discount;
         },
 
         fmt(v) { return new Intl.NumberFormat('fr-FR').format(Math.round(v || 0)) + ' ' + CURRENCY; },

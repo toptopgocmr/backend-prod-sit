@@ -87,6 +87,9 @@ class QuoteController extends Controller
             'accessories.*.price'          => 'nullable|numeric|min:0',
             // Coût main d'œuvre global
             'labor_cost'            => 'required|numeric|min:0',
+            // Remise sur le solde total
+            'discount_type'         => 'nullable|in:fixed,percent',
+            'discount_value'        => 'nullable|numeric|min:0',
             'valid_until'           => 'nullable|date|after:today',
             'delivery_date'         => 'nullable|date',
             'notes'                 => 'nullable|string',
@@ -199,7 +202,17 @@ class QuoteController extends Controller
                 }
             }
 
-            $total = $fabricCostTotal + $garmentTypeCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
+            $subtotal = $fabricCostTotal + $garmentTypeCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
+
+            // ── Remise sur le solde total (montant fixe ou pourcentage) ──
+            $discountType  = $validated['discount_type'] ?? 'fixed';
+            $discountValue = floatval($validated['discount_value'] ?? 0);
+            $discountAmount = $discountType === 'percent'
+                ? $subtotal * (min($discountValue, 100) / 100)
+                : $discountValue;
+            $discountAmount = max(0, min($discountAmount, $subtotal));
+
+            $total = $subtotal - $discountAmount;
 
             Quote::create([
                 'client_id'        => $validated['client_id'],
@@ -209,6 +222,9 @@ class QuoteController extends Controller
                 'accessories'      => $accessoriesData,
                 'accessories_cost' => $accessoriesCost,
                 'labor_cost'       => $validated['labor_cost'],
+                'discount_type'    => $discountValue > 0 ? $discountType : null,
+                'discount_value'   => $discountValue,
+                'discount_amount'  => $discountAmount,
                 'total'            => $total,
                 'created_by'       => auth()->id(),
                 'status'           => 'brouillon',

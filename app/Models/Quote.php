@@ -21,7 +21,9 @@ class Quote extends Model
         // Multi-vêtements / multi-tissus (nouveaux devis)
         'garments',
         // Coûts communs
-        'labor_cost', 'accessories_cost', 'accessories', 'total',
+        'labor_cost', 'accessories_cost', 'accessories',
+        'discount_type', 'discount_value', 'discount_amount',
+        'total',
         // Statut & dates
         'status', 'valid_until', 'delivery_date', 'notes', 'custom_order_id',
     ];
