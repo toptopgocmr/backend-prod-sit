@@ -42,23 +42,31 @@ class QuoteController extends Controller
         return view('orders.quotes.index', compact('quotes', 'statuses'));
     }
 
-    public function create()
+    private function garmentTypes(): array
     {
-        $clients          = Client::orderBy('first_name')->get();
-        $fabrics          = Product::active()->tissus()->get();
-        $accessoryProducts = Product::active()->accessoires()->orderBy('name')->get();
-        $garmentTypes = [
+        return [
             'robe'    => 'Robe',    'costume'  => 'Costume',
             'pantalon'=> 'Pantalon','chemise'  => 'Chemise',
             'boubou'  => 'Boubou', 'ensemble' => 'Ensemble',
             'autre'   => 'Autre',
         ];
+    }
+
+    public function create()
+    {
+        $clients          = Client::orderBy('first_name')->get();
+        $fabrics          = Product::active()->tissus()->get();
+        $accessoryProducts = Product::active()->accessoires()->orderBy('name')->get();
+        $garmentTypes = $this->garmentTypes();
         return view('orders.quotes.create', compact('clients', 'fabrics', 'accessoryProducts', 'garmentTypes'));
     }
 
-    public function store(Request $request)
+    /**
+     * Règles de validation communes à la création et à la modification d'un devis.
+     */
+    private function quoteValidationRules(bool $isUpdate = false): array
     {
-        $validated = $request->validate([
+        return [
             'client_id'             => 'required|exists:clients,id',
             'gender'                => 'nullable|in:homme,femme,enfant',
             // Garments (multi-vêtements)
@@ -67,6 +75,7 @@ class QuoteController extends Controller
             'garments.*.garment_type_entries'              => 'nullable|array',
             'garments.*.garment_type_entries.*.value'      => 'nullable|string|max:100',
             'garments.*.garment_type_entries.*.price'      => 'nullable|numeric|min:0',
+            'garments.*.garment_type_entries.*.mode'       => 'nullable|in:list,custom',
             'garments.*.model_name'      => 'nullable|string|max:255',
             'garments.*.model_description' => 'nullable|string',
             'garments.*.qty'             => 'nullable|integer|min:1',
@@ -90,149 +99,165 @@ class QuoteController extends Controller
             // Remise sur le solde total
             'discount_type'         => 'nullable|in:fixed,percent',
             'discount_value'        => 'nullable|numeric|min:0',
-            'valid_until'           => 'nullable|date|after:today',
+            'valid_until'           => $isUpdate ? 'nullable|date' : 'nullable|date|after:today',
             'delivery_date'         => 'nullable|date',
             'notes'                 => 'nullable|string',
-        ]);
+        ];
+    }
 
-        try {
-        DB::transaction(function () use ($validated, $request) {
+    /**
+     * Calcule garments/fabrics/accessoires/remise/total à partir des données validées.
+     * Utilisé par store() et update() pour éviter la duplication.
+     */
+    private function computeQuoteData(array $validated): array
+    {
+        $fabricCostTotal      = 0;
+        $garmentTypeCostTotal = 0;
+        $garmentsData         = [];
 
-            // ── Calcul du coût tissu total (tous vêtements confondus) ──
-            $fabricCostTotal      = 0;
-            $garmentTypeCostTotal = 0;
-            $garmentsData         = [];
+        foreach ($validated['garments'] as $garment) {
+            $garmentFabrics    = [];
+            $garmentFabricCost = 0;
 
-            foreach ($validated['garments'] as $garment) {
-                $garmentFabrics    = [];
-                $garmentFabricCost = 0;
+            // ── Types de vêtement (saisie manuelle = prix supplémentaire possible, x quantité) ──
+            $garmentQty         = intval($garment['qty'] ?? 1);
+            $garmentTypeEntries = [];
+            $garmentTypeCost    = 0;
+            foreach ($garment['garment_type_entries'] ?? [] as $entry) {
+                $value = trim($entry['value'] ?? '');
+                if ($value === '') continue;
+                $unitPrice = floatval($entry['price'] ?? 0);
+                $lineTotal = $unitPrice * $garmentQty;
+                $garmentTypeCost += $lineTotal;
+                $garmentTypeEntries[] = [
+                    'value'      => $value,
+                    'price'      => $unitPrice,
+                    'qty'        => $garmentQty,
+                    'line_total' => $lineTotal,
+                    'mode'       => $entry['mode'] ?? 'list',
+                ];
+            }
+            $garmentTypeCostTotal += $garmentTypeCost;
 
-                // ── Types de vêtement (saisie manuelle = prix supplémentaire possible, x quantité) ──
-                $garmentQty         = intval($garment['qty'] ?? 1);
-                $garmentTypeEntries = [];
-                $garmentTypeCost    = 0;
-                foreach ($garment['garment_type_entries'] ?? [] as $entry) {
-                    $value = trim($entry['value'] ?? '');
-                    if ($value === '') continue;
-                    $unitPrice = floatval($entry['price'] ?? 0);
-                    $lineTotal = $unitPrice * $garmentQty;
-                    $garmentTypeCost += $lineTotal;
-                    $garmentTypeEntries[] = [
-                        'value'      => $value,
-                        'price'      => $unitPrice,
-                        'qty'        => $garmentQty,
-                        'line_total' => $lineTotal,
-                    ];
-                }
-                $garmentTypeCostTotal += $garmentTypeCost;
+            foreach ($garment['fabrics'] ?? [] as $fabric) {
+                $cost = 0;
+                $fabricProductId      = null;
+                $fabricName           = null;
+                $fabricPricePerMeter  = null;
 
-                foreach ($garment['fabrics'] ?? [] as $fabric) {
-                    $cost = 0;
-                    $fabricProductId      = null;
-                    $fabricName           = null;
-                    $fabricPricePerMeter  = null;
-
-                    if (($fabric['mode'] ?? 'custom') === 'stock' && !empty($fabric['fabric_product_id'])) {
-                        $product             = Product::find($fabric['fabric_product_id']);
-                        $fabricProductId     = $product?->id;
-                        $meters              = floatval($fabric['fabric_meters'] ?? 0);
-                        $cost                = ($product?->price_per_meter ?? 0) * $meters;
-                        $fabricPricePerMeter = $product?->price_per_meter ?? 0;
-                    } elseif (!empty($fabric['fabric_name']) && !empty($fabric['fabric_meters'])) {
-                        $fabricName          = $fabric['fabric_name'];
-                        $fabricPricePerMeter = floatval($fabric['fabric_price_per_meter'] ?? 0);
-                        $meters              = floatval($fabric['fabric_meters']);
-                        $cost                = $fabricPricePerMeter * $meters;
-                    }
-
-                    $garmentFabricCost += $cost;
-
-                    $garmentFabrics[] = [
-                        'mode'                  => $fabric['mode'] ?? 'custom',
-                        'fabric_product_id'     => $fabricProductId,
-                        'fabric_name'           => $fabricName,
-                        'fabric_price_per_meter'=> $fabricPricePerMeter,
-                        'fabric_meters'         => floatval($fabric['fabric_meters'] ?? 0),
-                        'fabric_color'          => $fabric['fabric_color'] ?? null,
-                        'fabric_cost'           => $cost,
-                    ];
+                if (($fabric['mode'] ?? 'custom') === 'stock' && !empty($fabric['fabric_product_id'])) {
+                    $product             = Product::find($fabric['fabric_product_id']);
+                    $fabricProductId     = $product?->id;
+                    $meters              = floatval($fabric['fabric_meters'] ?? 0);
+                    $cost                = ($product?->price_per_meter ?? 0) * $meters;
+                    $fabricPricePerMeter = $product?->price_per_meter ?? 0;
+                } elseif (!empty($fabric['fabric_name']) && !empty($fabric['fabric_meters'])) {
+                    $fabricName          = $fabric['fabric_name'];
+                    $fabricPricePerMeter = floatval($fabric['fabric_price_per_meter'] ?? 0);
+                    $meters              = floatval($fabric['fabric_meters']);
+                    $cost                = $fabricPricePerMeter * $meters;
                 }
 
-                $fabricCostTotal += $garmentFabricCost;
+                $garmentFabricCost += $cost;
 
-                $garmentsData[] = [
-                    'garment_type'         => $garment['garment_type'] ?? null,
-                    'garment_type_entries' => $garmentTypeEntries,
-                    'garment_type_cost'    => $garmentTypeCost,
-                    'model_name'           => $garment['model_name'] ?? null,
-                    'model_description'    => $garment['model_description'] ?? null,
-                    'qty'                  => intval($garment['qty'] ?? 1),
-                    'fabrics'              => $garmentFabrics,
-                    'fabric_cost'          => $garmentFabricCost,
+                $garmentFabrics[] = [
+                    'mode'                  => $fabric['mode'] ?? 'custom',
+                    'fabric_product_id'     => $fabricProductId,
+                    'fabric_name'           => $fabricName,
+                    'fabric_price_per_meter'=> $fabricPricePerMeter,
+                    'fabric_meters'         => floatval($fabric['fabric_meters'] ?? 0),
+                    'fabric_color'          => $fabric['fabric_color'] ?? null,
+                    'fabric_cost'           => $cost,
                 ];
             }
 
-            // ── Accessoires ──
-            $accessoriesCost = 0;
-            $accessoriesData = [];
-            if (!empty($validated['accessories'])) {
-                foreach ($validated['accessories'] as $acc) {
-                    $price = floatval($acc['price'] ?? 0);
-                    $qty   = intval($acc['qty'] ?? 1);
-                    $name  = $acc['name'] ?? '';
-                    $mode  = $acc['mode'] ?? 'custom';
+            $fabricCostTotal += $garmentFabricCost;
 
-                    // Si mode stock, récupérer le prix et le nom depuis le produit
-                    if ($mode === 'stock' && !empty($acc['product_id'])) {
-                        $product = Product::find($acc['product_id']);
-                        if ($product) {
-                            $price = $product->price ?? 0;
-                            $name  = $product->name;
-                        }
+            $garmentsData[] = [
+                'garment_type'         => $garment['garment_type'] ?? null,
+                'garment_type_entries' => $garmentTypeEntries,
+                'garment_type_cost'    => $garmentTypeCost,
+                'model_name'           => $garment['model_name'] ?? null,
+                'model_description'    => $garment['model_description'] ?? null,
+                'qty'                  => intval($garment['qty'] ?? 1),
+                'fabrics'              => $garmentFabrics,
+                'fabric_cost'          => $garmentFabricCost,
+            ];
+        }
+
+        // ── Accessoires ──
+        $accessoriesCost = 0;
+        $accessoriesData = [];
+        if (!empty($validated['accessories'])) {
+            foreach ($validated['accessories'] as $acc) {
+                $price = floatval($acc['price'] ?? 0);
+                $qty   = intval($acc['qty'] ?? 1);
+                $name  = $acc['name'] ?? '';
+                $mode  = $acc['mode'] ?? 'custom';
+
+                // Si mode stock, récupérer le prix et le nom depuis le produit
+                if ($mode === 'stock' && !empty($acc['product_id'])) {
+                    $product = Product::find($acc['product_id']);
+                    if ($product) {
+                        $price = $product->price ?? 0;
+                        $name  = $product->name;
                     }
-
-                    $accessoriesCost += $price * $qty;
-                    $accessoriesData[] = [
-                        'mode'       => $mode,
-                        'product_id' => $acc['product_id'] ?? null,
-                        'name'       => $name,
-                        'qty'        => $qty,
-                        'price'      => $price,
-                    ];
                 }
+
+                $accessoriesCost += $price * $qty;
+                $accessoriesData[] = [
+                    'mode'       => $mode,
+                    'product_id' => $acc['product_id'] ?? null,
+                    'name'       => $name,
+                    'qty'        => $qty,
+                    'price'      => $price,
+                ];
             }
+        }
 
-            $subtotal = $fabricCostTotal + $garmentTypeCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
+        $subtotal = $fabricCostTotal + $garmentTypeCostTotal + floatval($validated['labor_cost']) + $accessoriesCost;
 
-            // ── Remise sur le solde total (montant fixe ou pourcentage) ──
-            $discountType  = $validated['discount_type'] ?? 'fixed';
-            $discountValue = floatval($validated['discount_value'] ?? 0);
-            $discountAmount = $discountType === 'percent'
-                ? $subtotal * (min($discountValue, 100) / 100)
-                : $discountValue;
-            $discountAmount = max(0, min($discountAmount, $subtotal));
+        // ── Remise sur le solde total (montant fixe ou pourcentage) ──
+        $discountType  = $validated['discount_type'] ?? 'fixed';
+        $discountValue = floatval($validated['discount_value'] ?? 0);
+        $discountAmount = $discountType === 'percent'
+            ? $subtotal * (min($discountValue, 100) / 100)
+            : $discountValue;
+        $discountAmount = max(0, min($discountAmount, $subtotal));
 
-            $total = $subtotal - $discountAmount;
+        $total = $subtotal - $discountAmount;
 
-            Quote::create([
-                'client_id'        => $validated['client_id'],
-                'gender'           => $validated['gender'] ?? null,
-                'garments'         => $garmentsData,
-                'fabric_cost'      => $fabricCostTotal,
-                'accessories'      => $accessoriesData,
-                'accessories_cost' => $accessoriesCost,
-                'labor_cost'       => $validated['labor_cost'],
-                'discount_type'    => $discountValue > 0 ? $discountType : null,
-                'discount_value'   => $discountValue,
-                'discount_amount'  => $discountAmount,
-                'total'            => $total,
-                'created_by'       => auth()->id(),
-                'status'           => 'brouillon',
-                'valid_until'      => $validated['valid_until'] ?? null,
-                'delivery_date'    => $validated['delivery_date'] ?? null,
-                'notes'            => $validated['notes'] ?? null,
-            ]);
-        });
+        return [
+            'garments'         => $garmentsData,
+            'fabric_cost'      => $fabricCostTotal,
+            'accessories'      => $accessoriesData,
+            'accessories_cost' => $accessoriesCost,
+            'labor_cost'       => $validated['labor_cost'],
+            'discount_type'    => $discountValue > 0 ? $discountType : null,
+            'discount_value'   => $discountValue,
+            'discount_amount'  => $discountAmount,
+            'total'            => $total,
+        ];
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate($this->quoteValidationRules());
+
+        try {
+            DB::transaction(function () use ($validated) {
+                $data = $this->computeQuoteData($validated);
+
+                Quote::create(array_merge($data, [
+                    'client_id'     => $validated['client_id'],
+                    'gender'        => $validated['gender'] ?? null,
+                    'created_by'    => auth()->id(),
+                    'status'        => 'brouillon',
+                    'valid_until'   => $validated['valid_until'] ?? null,
+                    'delivery_date' => $validated['delivery_date'] ?? null,
+                    'notes'         => $validated['notes'] ?? null,
+                ]));
+            });
         } catch (Throwable $e) {
             Log::error('Erreur lors de la création du devis : ' . $e->getMessage(), [
                 'exception' => $e,
@@ -245,6 +270,57 @@ class QuoteController extends Controller
         }
 
         return redirect()->route('quotes.index')->with('success', 'Devis créé avec succès.');
+    }
+
+    public function edit(Quote $quote)
+    {
+        if ($quote->custom_order_id) {
+            return redirect()->route('quotes.show', $quote)
+                ->with('error', 'Ce devis a déjà été converti en commande, il ne peut plus être modifié.');
+        }
+
+        $clients          = Client::orderBy('first_name')->get();
+        $fabrics          = Product::active()->tissus()->get();
+        $accessoryProducts = Product::active()->accessoires()->orderBy('name')->get();
+        $garmentTypes = $this->garmentTypes();
+
+        return view('orders.quotes.edit', compact('quote', 'clients', 'fabrics', 'accessoryProducts', 'garmentTypes'));
+    }
+
+    public function update(Request $request, Quote $quote)
+    {
+        if ($quote->custom_order_id) {
+            return redirect()->route('quotes.show', $quote)
+                ->with('error', 'Ce devis a déjà été converti en commande, il ne peut plus être modifié.');
+        }
+
+        $validated = $request->validate($this->quoteValidationRules(true));
+
+        try {
+            DB::transaction(function () use ($validated, $quote) {
+                $data = $this->computeQuoteData($validated);
+
+                $quote->update(array_merge($data, [
+                    'client_id'     => $validated['client_id'],
+                    'gender'        => $validated['gender'] ?? null,
+                    'valid_until'   => $validated['valid_until'] ?? null,
+                    'delivery_date' => $validated['delivery_date'] ?? null,
+                    'notes'         => $validated['notes'] ?? null,
+                ]));
+            });
+        } catch (Throwable $e) {
+            Log::error('Erreur lors de la mise à jour du devis : ' . $e->getMessage(), [
+                'exception' => $e,
+                'user_id'   => auth()->id(),
+                'quote_id'  => $quote->id,
+            ]);
+
+            return back()->withInput()->with('error',
+                "Impossible de mettre à jour le devis. Vérifiez les tissus, accessoires et le coût de confection saisis, puis réessayez. Si le problème persiste, contactez l'administrateur."
+            );
+        }
+
+        return redirect()->route('quotes.show', $quote)->with('success', 'Devis mis à jour avec succès.');
     }
 
     public function show(Quote $quote)

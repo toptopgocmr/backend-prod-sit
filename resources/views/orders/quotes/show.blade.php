@@ -148,6 +148,14 @@
                 @endif
 
                 <div class="pt-3 space-y-2 border-t border-gray-50">
+                    @if(!$quote->custom_order_id)
+                    <a href="{{ route('quotes.edit', $quote) }}"
+                       class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
+                        <i data-lucide="pencil" style="width:15px;height:15px"></i>
+                        Modifier le devis
+                    </a>
+                    @endif
+
                     <a href="{{ route('quotes.pdf', $quote) }}" target="_blank"
                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                         <i data-lucide="download" style="width:15px;height:15px"></i>

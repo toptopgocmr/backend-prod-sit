@@ -1,10 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Nouveau devis')
+@section('title', 'Modifier le devis')
 
 @section('breadcrumb')
     <a href="{{ route('quotes.index') }}" class="hover:text-gray-600 transition-colors">Devis</a>
     <i data-lucide="chevron-right" style="width:12px;height:12px"></i>
-    <span class="text-gray-600 font-medium">Nouveau devis</span>
+    <a href="{{ route('quotes.show', $quote) }}" class="hover:text-gray-600 transition-colors">{{ $quote->reference }}</a>
+    <i data-lucide="chevron-right" style="width:12px;height:12px"></i>
+    <span class="text-gray-600 font-medium">Modifier</span>
 @endsection
 
 @section('content')
@@ -29,19 +31,31 @@ $accessoryProductsJson = $accessoryProducts->map(fn($a) => [
     'price'          => $a->price ?? 0,
     'stock_quantity' => $a->stock_quantity ?? 0,
 ])->values();
+
+$initialQuote = [
+    'client_id'      => $quote->client_id,
+    'gender'         => $quote->gender,
+    'garments'       => $quote->garments ?? [],
+    'accessories'    => $quote->accessories ?? [],
+    'labor_cost'     => (float) $quote->labor_cost,
+    'discount_type'  => $quote->discount_type,
+    'discount_value' => (float) $quote->discount_value,
+];
 @endphp
 
 <script>
 const FABRICS             = {!! json_encode($fabricsJson) !!};
-const CLIENTS             = {!! json_encode($clientsJson) !!};
+const CLIENTS              = {!! json_encode($clientsJson) !!};
 const ACCESSORY_PRODUCTS  = {!! json_encode($accessoryProductsJson) !!};
 const CURRENCY            = '{{ env("CURRENCY", "FCFA") }}';
 const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
+const INITIAL_QUOTE       = {!! json_encode($initialQuote) !!};
 </script>
 
-<form method="POST" action="{{ route('quotes.store') }}" enctype="multipart/form-data"
-      x-data="quoteForm()" id="quoteForm">
+<form method="POST" action="{{ route('quotes.update', $quote) }}" enctype="multipart/form-data"
+      x-data="quoteForm(INITIAL_QUOTE)" id="quoteForm">
     @csrf
+    @method('PUT')
 
     @if($errors->any())
     <div class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3.5 rounded-xl text-sm">
@@ -62,8 +76,8 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                     <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
                 </div>
                 <div>
-                    <h2 class="text-lg font-display font-bold text-dark">Nouveau devis</h2>
-                    <p class="text-xs text-gray-400">Préparez un devis à soumettre au client avant de passer commande</p>
+                    <h2 class="text-lg font-display font-bold text-dark">Modifier le devis {{ $quote->reference }}</h2>
+                    <p class="text-xs text-gray-400">Rectifiez ou complétez les informations avant renvoi au client</p>
                 </div>
             </div>
 
@@ -547,20 +561,19 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Devis valide jusqu'au</label>
-                        <input type="date" name="valid_until" value="{{ old('valid_until', now()->addDays(15)->format('Y-m-d')) }}"
-                               min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                        <input type="date" name="valid_until" value="{{ old('valid_until', optional($quote->valid_until)->format('Y-m-d')) }}"
                                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Délai de livraison estimé</label>
-                        <input type="date" name="delivery_date" value="{{ old('delivery_date') }}"
+                        <input type="date" name="delivery_date" value="{{ old('delivery_date', optional($quote->delivery_date)->format('Y-m-d')) }}"
                                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Notes / conditions</label>
                     <textarea name="notes" rows="2" placeholder="Conditions particulières, acompte requis, délai de retouches..."
-                              class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">{{ old('notes') }}</textarea>
+                              class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">{{ old('notes', $quote->notes) }}</textarea>
                 </div>
             </div>
 
@@ -598,7 +611,7 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                             <span>Confection <span class="text-red-400">*</span></span>
                             <div class="flex items-center gap-1">
                                 <input type="number" name="labor_cost" x-model.number="laborCost" x-on:input="calcTotals()"
-                                       value="{{ old('labor_cost', 0) }}" min="0" step="500" placeholder="0" required
+                                       min="0" step="500" placeholder="0" required
                                        class="w-28 px-2 py-1 rounded-lg border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                                 <span class="text-xs text-gray-400" x-text="CURRENCY"></span>
                             </div>
@@ -637,10 +650,10 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                     <div class="space-y-2 pt-2 border-t border-gray-50">
                         <button type="submit"
                                 class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-sm">
-                            <i data-lucide="file-text" style="width:16px;height:16px"></i>
-                            Créer le devis
+                            <i data-lucide="save" style="width:16px;height:16px"></i>
+                            Enregistrer les modifications
                         </button>
-                        <a href="{{ route('quotes.index') }}"
+                        <a href="{{ route('quotes.show', $quote) }}"
                            class="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                             Annuler
                         </a>

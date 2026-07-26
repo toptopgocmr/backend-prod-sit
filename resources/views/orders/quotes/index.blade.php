@@ -97,6 +97,12 @@
                                        class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-dark transition-colors" title="Voir">
                                         <i data-lucide="eye" style="width:15px;height:15px"></i>
                                     </a>
+                                    @if(!$quote->custom_order_id)
+                                    <a href="{{ route('quotes.edit', $quote) }}"
+                                       class="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Modifier">
+                                        <i data-lucide="pencil" style="width:15px;height:15px"></i>
+                                    </a>
+                                    @endif
                                     <a href="{{ route('quotes.pdf', $quote) }}" target="_blank"
                                        class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="PDF">
                                         <i data-lucide="file-text" style="width:15px;height:15px"></i>
