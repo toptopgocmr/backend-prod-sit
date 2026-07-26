@@ -159,15 +159,49 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
 
                             {{-- Champs vêtement --}}
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Type de vêtement</label>
-                                    <select :name="`garments[${gi}][garment_type]`" x-model="garment.garment_type"
-                                            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                                        <option value="">— Choisir —</option>
-                                        <template x-for="[val, lbl] in Object.entries(GARMENT_TYPES)" :key="val">
-                                            <option :value="val" x-text="lbl" :selected="garment.garment_type === val"></option>
-                                        </template>
-                                    </select>
+                                <div x-data="garmentTypeSelect(garment)">
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Type(s) de vêtement</label>
+                                    <input type="hidden" :name="`garments[${gi}][garment_type]`" :value="garment.garment_types.join(', ')">
+                                    <div class="relative">
+                                        <div x-on:click="open = true; $nextTick(() => $refs.gtInput.focus())"
+                                             class="w-full min-h-[38px] flex flex-wrap items-center gap-1.5 px-2 py-1.5 rounded-xl border border-gray-200 bg-white cursor-text focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                                            <template x-for="(t, ti) in garment.garment_types" :key="ti">
+                                                <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2 py-1 rounded-lg">
+                                                    <span x-text="t"></span>
+                                                    <button type="button" x-on:click.stop="removeType(ti)" class="hover:text-blue-900">
+                                                        <i data-lucide="x" style="width:11px;height:11px"></i>
+                                                    </button>
+                                                </span>
+                                            </template>
+                                            <input x-ref="gtInput" type="text" x-model="query"
+                                                   x-on:input="filter()" x-on:keydown.enter.prevent="addFromQuery()"
+                                                   x-on:keydown.backspace="if(!query && garment.garment_types.length) removeType(garment.garment_types.length-1)"
+                                                   x-on:focus="open = true"
+                                                   :placeholder="garment.garment_types.length ? '' : 'Choisir ou écrire un type...'"
+                                                   class="flex-1 min-w-[100px] text-sm text-dark focus:outline-none py-0.5 bg-transparent">
+                                        </div>
+                                        <div x-show="open" x-on:click.outside="open=false" x-transition
+                                             class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                            <ul class="max-h-48 overflow-y-auto">
+                                                <template x-for="[val, lbl] in filtered" :key="val">
+                                                    <li x-on:click="addType(lbl); open=false"
+                                                        class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-dark flex items-center justify-between">
+                                                        <span x-text="lbl"></span>
+                                                        <i data-lucide="check" style="width:12px;height:12px" class="text-blue-600" x-show="garment.garment_types.includes(lbl)"></i>
+                                                    </li>
+                                                </template>
+                                                <li x-show="query.trim() && !garment.garment_types.includes(query.trim())"
+                                                    x-on:click="addFromQuery(); open=false"
+                                                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-blue-700 font-semibold flex items-center gap-1.5 border-t border-gray-50">
+                                                    <i data-lucide="plus" style="width:12px;height:12px"></i>
+                                                    <span>Ajouter «<span x-text="query"></span>»</span>
+                                                </li>
+                                                <li x-show="filtered.length === 0 && !query.trim()" class="px-3 py-4 text-center text-gray-400 text-xs">
+                                                    Aucun résultat — tapez pour créer un type.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nom du modèle</label>
@@ -592,6 +626,35 @@ function accSelect(acc) {
     };
 }
 
+// ── Composant multi-select "type de vêtement" (choix + saisie libre) ────────
+function garmentTypeSelect(garment) {
+    return {
+        open: false,
+        query: '',
+        filtered: Object.entries(GARMENT_TYPES),
+        filter() {
+            const q = this.query.toLowerCase();
+            this.filtered = Object.entries(GARMENT_TYPES).filter(([val, lbl]) => lbl.toLowerCase().includes(q));
+        },
+        addType(lbl) {
+            if (!garment.garment_types.includes(lbl)) garment.garment_types.push(lbl);
+            this.query = '';
+            this.filtered = Object.entries(GARMENT_TYPES);
+            this.$nextTick(() => this.$refs.gtInput?.focus());
+        },
+        addFromQuery() {
+            const v = this.query.trim();
+            if (!v) return;
+            if (!garment.garment_types.includes(v)) garment.garment_types.push(v);
+            this.query = '';
+            this.filtered = Object.entries(GARMENT_TYPES);
+        },
+        removeType(i) {
+            garment.garment_types.splice(i, 1);
+        },
+    };
+}
+
 // ── Composant dropdown tissu en stock (par fabric slot) ──────────────────────
 function fabricSelect(fabric) {
     return {
@@ -651,7 +714,7 @@ function quoteForm() {
                  fabric_name: '', fabric_price_per_meter: 0, fabric_meters: 0, fabric_color: '' };
     }
     function newGarment() {
-        return { _id: uid(), garment_type: '', model_name: '', model_description: '',
+        return { _id: uid(), garment_types: [], model_name: '', model_description: '',
                  qty: 1, fabrics: [newFabric()] };
     }
 
