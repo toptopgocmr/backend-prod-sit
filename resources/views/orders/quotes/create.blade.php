@@ -209,12 +209,15 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                                                         <i data-lucide="x" style="width:14px;height:14px"></i>
                                                     </button>
                                                 </div>
-                                                <div x-show="gt.mode === 'custom'" class="flex items-center justify-end gap-1.5">
-                                                    <span class="text-xs text-gray-400">Prix supplémentaire pour ce type :</span>
+                                                <div x-show="gt.mode === 'custom'" class="flex items-center justify-end gap-1.5 flex-wrap">
+                                                    <span class="text-xs text-gray-400">Prix supplémentaire (par unité) :</span>
                                                     <input type="number" x-model.number="gt.price" x-on:input="calcTotals()"
                                                            min="0" step="100" placeholder="0"
                                                            class="w-28 px-2 py-1 rounded-lg border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                                                     <span class="text-xs text-gray-400 shrink-0" x-text="CURRENCY"></span>
+                                                    <span class="text-xs text-gray-400" x-show="(garment.qty || 1) > 1">
+                                                        (× <span x-text="garment.qty"></span> = <span class="font-semibold text-dark" x-text="fmt((parseFloat(gt.price) || 0) * (parseInt(garment.qty) || 1))"></span>)
+                                                    </span>
                                                 </div>
                                             </div>
                                         </template>
@@ -230,6 +233,7 @@ const GARMENT_TYPES       = {!! json_encode($garmentTypes) !!};
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Quantité</label>
                                         <input type="number" :name="`garments[${gi}][qty]`" x-model.number="garment.qty"
+                                               x-on:input="calcTotals()"
                                                min="1" value="1"
                                                class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-dark text-right focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                                     </div>
@@ -788,9 +792,10 @@ function quoteForm() {
                         fc += (parseFloat(f.fabric_price_per_meter) || 0) * meters;
                     }
                 }
+                const gQty = parseInt(g.qty) || 1;
                 for (const gt of g.garment_types) {
                     if (gt.mode === 'custom') {
-                        gtc += parseFloat(gt.price) || 0;
+                        gtc += (parseFloat(gt.price) || 0) * gQty;
                     }
                 }
             }

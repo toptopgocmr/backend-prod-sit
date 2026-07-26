@@ -104,15 +104,22 @@ class QuoteController extends Controller
                 $garmentFabrics    = [];
                 $garmentFabricCost = 0;
 
-                // ── Types de vêtement (saisie manuelle = prix supplémentaire possible) ──
+                // ── Types de vêtement (saisie manuelle = prix supplémentaire possible, x quantité) ──
+                $garmentQty         = intval($garment['qty'] ?? 1);
                 $garmentTypeEntries = [];
                 $garmentTypeCost    = 0;
                 foreach ($garment['garment_type_entries'] ?? [] as $entry) {
                     $value = trim($entry['value'] ?? '');
                     if ($value === '') continue;
-                    $price = floatval($entry['price'] ?? 0);
-                    $garmentTypeCost += $price;
-                    $garmentTypeEntries[] = ['value' => $value, 'price' => $price];
+                    $unitPrice = floatval($entry['price'] ?? 0);
+                    $lineTotal = $unitPrice * $garmentQty;
+                    $garmentTypeCost += $lineTotal;
+                    $garmentTypeEntries[] = [
+                        'value'      => $value,
+                        'price'      => $unitPrice,
+                        'qty'        => $garmentQty,
+                        'line_total' => $lineTotal,
+                    ];
                 }
                 $garmentTypeCostTotal += $garmentTypeCost;
 
