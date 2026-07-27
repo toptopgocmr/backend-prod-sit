@@ -756,11 +756,17 @@ function quoteForm(initial = null) {
         return { _id: uid(), mode: data.mode || 'list', value: data.value || '', price: data.price || 0 };
     }
     function newGarment(data = {}) {
+        // Compat devis anciens/mobiles : si aucune entrée structurée n'est disponible,
+        // on reconstruit depuis la chaîne combinée `garment_type` (ex : "Robe, Ensemble").
+        let typeEntries = data.garment_type_entries;
+        if ((!typeEntries || !typeEntries.length) && data.garment_type) {
+            typeEntries = String(data.garment_type).split(',')
+                .map(v => v.trim()).filter(v => v)
+                .map(v => ({ mode: Object.values(GARMENT_TYPES).includes(v) ? 'list' : 'custom', value: v, price: 0 }));
+        }
         return {
             _id: uid(),
-            garment_types: (data.garment_type_entries && data.garment_type_entries.length)
-                ? data.garment_type_entries.map(e => newGarmentType(e))
-                : [newGarmentType()],
+            garment_types: (typeEntries && typeEntries.length) ? typeEntries.map(e => newGarmentType(e)) : [newGarmentType()],
             model_name: data.model_name || '',
             model_description: data.model_description || '',
             qty: data.qty || 1,
