@@ -665,6 +665,18 @@ const INITIAL_QUOTE       = {!! json_encode($initialQuote) !!};
     </div>
 </form>
 
+{{-- ── Bloc de diagnostic temporaire (à retirer une fois le souci résolu) ──
+     Affiche les données brutes reçues par le formulaire, pour vérifier ce qui
+     est réellement enregistré en base pour ce devis. Visible admin uniquement. --}}
+@if(auth()->user()->isAdmin())
+<details class="mt-6 bg-white rounded-2xl border border-amber-200 p-4">
+    <summary class="text-xs font-semibold text-amber-700 cursor-pointer">
+        Diagnostic technique — données brutes du devis (cliquer pour afficher)
+    </summary>
+    <pre class="mt-3 text-[11px] leading-tight text-gray-600 whitespace-pre-wrap break-all">{{ json_encode($initialQuote, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+</details>
+@endif
+
 <script>
 // ── Composant dropdown accessoire en stock ───────────────────────────────────
 function accSelect(acc) {
