@@ -248,7 +248,7 @@
                         <option value="credit">Crédit</option>
                     </select>
                     <div class="relative">
-                        <input type="number" name="amount" min="1" max="{{ $customOrder->balance }}" step="500"
+                        <input type="number" name="amount" step="any"
                                placeholder="Montant" value="{{ $customOrder->balance }}"
                                class="w-full px-3 py-2 pr-16 rounded-xl border border-gray-200 text-sm font-bold text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20">
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-gray-400">FCFA</span>
